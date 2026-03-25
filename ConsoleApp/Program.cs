@@ -1,5 +1,4 @@
-﻿
-// Console.WriteLine("\nЗадание 2а");
+﻿// Console.WriteLine("\nЗадание 2а");
 // Console.Write("Введите размер массива: ");
 // int size = int.Parse(Console.ReadLine());
 // int[] numbers = new int[size];
@@ -125,7 +124,6 @@ class Program
                 break;
             }
         }
-
         if (found)
             Console.WriteLine("Фамилия найдена");
         else

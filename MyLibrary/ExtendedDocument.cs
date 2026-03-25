@@ -14,9 +14,6 @@ namespace MyLibrary
 
         public void CapitalizeTitle()
         {
-            if (string.IsNullOrEmpty(Title))
-                return;
-
             Title = char.ToUpper(Title[0]) + Title.Substring(1).ToLower();
         }
 
