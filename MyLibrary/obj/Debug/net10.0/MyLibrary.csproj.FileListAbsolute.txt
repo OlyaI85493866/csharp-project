@@ -1,0 +1,11 @@
+/Users/olizzzard1/Documents/C#/MyLibrary/bin/Debug/net10.0/MyLibrary.deps.json
+/Users/olizzzard1/Documents/C#/MyLibrary/bin/Debug/net10.0/MyLibrary.dll
+/Users/olizzzard1/Documents/C#/MyLibrary/bin/Debug/net10.0/MyLibrary.pdb
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/MyLibrary.GeneratedMSBuildEditorConfig.editorconfig
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/MyLibrary.AssemblyInfoInputs.cache
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/MyLibrary.AssemblyInfo.cs
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/MyLibrary.csproj.CoreCompileInputs.cache
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/MyLibrary.dll
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/refint/MyLibrary.dll
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/MyLibrary.pdb
+/Users/olizzzard1/Documents/C#/MyLibrary/obj/Debug/net10.0/ref/MyLibrary.dll

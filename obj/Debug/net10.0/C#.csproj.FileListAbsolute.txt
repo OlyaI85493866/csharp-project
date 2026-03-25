@@ -1,0 +1,5 @@
+/Users/olizzzard1/Documents/C#/obj/Debug/net10.0/C#.csproj.AssemblyReference.cache
+/Users/olizzzard1/Documents/C#/obj/Debug/net10.0/C#.GeneratedMSBuildEditorConfig.editorconfig
+/Users/olizzzard1/Documents/C#/obj/Debug/net10.0/C#.AssemblyInfoInputs.cache
+/Users/olizzzard1/Documents/C#/obj/Debug/net10.0/C#.AssemblyInfo.cs
+/Users/olizzzard1/Documents/C#/obj/Debug/net10.0/C#.csproj.CoreCompileInputs.cache
