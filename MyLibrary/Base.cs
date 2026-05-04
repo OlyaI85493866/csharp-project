@@ -1,4 +1,5 @@
 using System;
+
 namespace MyLibrary
 {
     public abstract class Base
@@ -12,6 +13,6 @@ namespace MyLibrary
             Title = title;
         }
 
-        public abstract void PrintInfo();
+        public abstract string GetInfo();
     }
 }

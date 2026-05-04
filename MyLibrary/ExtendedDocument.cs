@@ -4,23 +4,25 @@ namespace MyLibrary
 {
     public class ExtendedDocument : FamilyDocument
     {
-        private string _author;
+        public string Author { get; set; }
 
         public ExtendedDocument(int id, string title, string author)
             : base(id, title)
         {
-            _author = author;
+            Author = author;
         }
 
         public void CapitalizeTitle()
         {
-            Title = char.ToUpper(Title[0]) + Title.Substring(1).ToLower();
+            if (!string.IsNullOrWhiteSpace(Title))
+            {
+                Title = char.ToUpper(Title[0]) + Title.Substring(1).ToLower();
+            }
         }
 
-        public override void PrintInfo()
+        public override string GetInfo()
         {
-            base.PrintInfo();
-            Console.WriteLine($"Author: {_author}");
+            return $"{base.GetInfo()}, Автор: {Author}";
         }
     }
 }

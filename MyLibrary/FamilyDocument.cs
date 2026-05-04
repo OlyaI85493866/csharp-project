@@ -9,9 +9,9 @@ namespace MyLibrary
         {
         }
 
-        public override void PrintInfo()
+        public override string GetInfo()
         {
-            Console.WriteLine($"Id: {Id}, Title: {Title}");
+            return $"Id: {Id}, Название: {Title}";
         }
     }
 }
