@@ -1,31 +1,40 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using MyLibrary;
+using FamilyDocumentsWinForms.Services;
 
 namespace FamilyDocumentsWinForms;
 
 public partial class Form1 : Form
 {
-    private Label labelHeader;
-    private Label labelId;
-    private Label labelTitle;
-    private Label labelType;
-    private Label labelDate;
-    private Label labelInfo;
+    private List<FamilyDocument> documents = new List<FamilyDocument>();
+    private DocumentStorageService storageService = new DocumentStorageService();
 
-    private NumericUpDown numericId;
-    private TextBox textBoxTitle;
-    private ComboBox comboBoxType;
-    private DateTimePicker dateTimePickerDocument;
-    private CheckBox checkBoxImportant;
-    private Button buttonAdd;
-    private Button buttonClear;
-    private ListBox listBoxDocuments;
+    private Label labelHeader = null!;
+    private Label labelId = null!;
+    private Label labelTitle = null!;
+    private Label labelType = null!;
+    private Label labelDate = null!;
+    private Label labelInfo = null!;
+
+    private NumericUpDown numericId = null!;
+    private TextBox textBoxTitle = null!;
+    private ComboBox comboBoxType = null!;
+    private DateTimePicker dateTimePickerDocument = null!;
+    private CheckBox checkBoxImportant = null!;
+    private Button buttonAdd = null!;
+    private Button buttonClear = null!;
+    private ListBox listBoxDocuments = null!;
+
     public Form1()
     {
         InitializeComponent();
         CreateFormElements();
+
+        documents = storageService.LoadDocuments();
+        RefreshDocumentsList();
     }
 
     private void CreateFormElements()
@@ -35,7 +44,7 @@ public partial class Form1 : Form
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
-        
+
         labelHeader = new Label();
         labelHeader.Text = "Семейная документация";
         labelHeader.Location = new Point(30, 10);
@@ -43,13 +52,13 @@ public partial class Form1 : Form
         labelHeader.Font = new Font("Segoe UI", 16, FontStyle.Bold);
         labelHeader.ForeColor = Color.FromArgb(44, 62, 80);
         this.Controls.Add(labelHeader);
-                
+
         labelId = new Label();
         labelId.Text = "Id документа:";
         labelId.Location = new Point(30, 60);
         labelId.AutoSize = true;
         this.Controls.Add(labelId);
-        
+
         numericId = new NumericUpDown();
         numericId.Location = new Point(180, 60);
         numericId.Size = new Size(200, 25);
@@ -59,13 +68,13 @@ public partial class Form1 : Form
         numericId.ForeColor = Color.FromArgb(44, 62, 80);
         numericId.ValueChanged += NumericId_ValueChanged;
         this.Controls.Add(numericId);
-        
+
         labelTitle = new Label();
         labelTitle.Text = "Название документа:";
         labelTitle.Location = new Point(30, 100);
         labelTitle.AutoSize = true;
         this.Controls.Add(labelTitle);
-        
+
         textBoxTitle = new TextBox();
         textBoxTitle.Location = new Point(230, 100);
         textBoxTitle.Size = new Size(200, 25);
@@ -122,7 +131,7 @@ public partial class Form1 : Form
         buttonAdd.Font = new Font("Segoe UI", 10, FontStyle.Bold);
         buttonAdd.Cursor = Cursors.Hand;
         buttonAdd.Click += ButtonAdd_Click;
-        this.Controls.Add(buttonAdd);buttonAdd = new Button();
+        this.Controls.Add(buttonAdd);
 
         buttonClear = new Button();
         buttonClear.Text = "Очистить";
@@ -136,7 +145,6 @@ public partial class Form1 : Form
         buttonClear.Cursor = Cursors.Hand;
         buttonClear.Click += ButtonClear_Click;
         this.Controls.Add(buttonClear);
-
 
         listBoxDocuments = new ListBox();
         listBoxDocuments.Location = new Point(460, 30);
@@ -155,23 +163,47 @@ public partial class Form1 : Form
         labelInfo.Font = new Font("Segoe UI", 10);
         this.Controls.Add(labelInfo);
     }
-    private void NumericId_ValueChanged(object sender, EventArgs e)
+
+    private void RefreshDocumentsList()
+    {
+        listBoxDocuments.Items.Clear();
+
+        foreach (FamilyDocument document in documents)
+        {
+            string importantText = document.IsImportant ? "важный" : "обычный";
+
+            string documentInfo =
+                document.Id + " - " + document.Title +
+                " | Тип: " + document.Category +
+                " | Дата: " + document.DocumentDate.ToShortDateString() +
+                " | Статус: " + importantText;
+
+            listBoxDocuments.Items.Add(documentInfo);
+        }
+    }
+
+    private void NumericId_ValueChanged(object? sender, EventArgs e)
     {
         labelInfo.Text = "Выбран Id документа: " + numericId.Value;
     }
-    private void TextBoxTitle_TextChanged(object sender, EventArgs e)
+
+    private void TextBoxTitle_TextChanged(object? sender, EventArgs e)
     {
         labelInfo.Text = "Вводится название документа: " + textBoxTitle.Text;
     }
-    private void ComboBoxType_SelectedIndexChanged(object sender, EventArgs e)
+
+    private void ComboBoxType_SelectedIndexChanged(object? sender, EventArgs e)
     {
-        labelInfo.Text = "Выбран тип документа: " + comboBoxType.SelectedItem.ToString();   
+        string selectedType = comboBoxType.SelectedItem?.ToString() ?? "Не указано";
+        labelInfo.Text = "Выбран тип документа: " + selectedType;
     }
-    private void DateTimePickerDocument_ValueChanged(object sender, EventArgs e)
+
+    private void DateTimePickerDocument_ValueChanged(object? sender, EventArgs e)
     {
         labelInfo.Text = "Выбрана дата документа: " + dateTimePickerDocument.Value.ToShortDateString();
     }
-    private void CheckBoxImportant_CheckedChanged(object sender, EventArgs e)
+
+    private void CheckBoxImportant_CheckedChanged(object? sender, EventArgs e)
     {
         if (checkBoxImportant.Checked)
         {
@@ -182,7 +214,8 @@ public partial class Form1 : Form
             labelInfo.Text = "Документ не отмечен как важный.";
         }
     }
-    private void ButtonAdd_Click(object sender, EventArgs e)
+
+    private void ButtonAdd_Click(object? sender, EventArgs e)
     {
         if (string.IsNullOrWhiteSpace(textBoxTitle.Text))
         {
@@ -192,23 +225,23 @@ public partial class Form1 : Form
 
         int id = (int)numericId.Value;
         string title = textBoxTitle.Text.Trim();
-        string type = comboBoxType.SelectedItem.ToString();
-        string date = dateTimePickerDocument.Value.ToShortDateString();
-        string importance = checkBoxImportant.Checked ? "важный" : "обычный";
+        string type = comboBoxType.SelectedItem?.ToString() ?? "Не указано";
 
-        ExtendedDocument document = new ExtendedDocument(id, title, "Изместьева Ольга");
-        document.CapitalizeTitle();
+        FamilyDocument document = new FamilyDocument(id, title)
+        {
+            Category = type,
+            DocumentDate = dateTimePickerDocument.Value,
+            IsImportant = checkBoxImportant.Checked
+        };
 
-        string documentInfo = document.Id + " - " + document.Title +
-                            " | Тип: " + type +
-                            " | Дата: " + date +
-                            " | Статус: " + importance;
+        documents.Add(document);
+        storageService.SaveDocuments(documents);
+        RefreshDocumentsList();
 
-        listBoxDocuments.Items.Add(documentInfo);
-
-        labelInfo.Text = "Документ добавлен:\n" + documentInfo;
+        labelInfo.Text = "Документ добавлен и сохранен:\n" + document.GetInfo();
     }
-    private void ButtonClear_Click(object sender, EventArgs e)
+
+    private void ButtonClear_Click(object? sender, EventArgs e)
     {
         numericId.Value = 1;
         textBoxTitle.Clear();
@@ -218,12 +251,15 @@ public partial class Form1 : Form
 
         labelInfo.Text = "Поля очищены.";
     }
-        private void ListBoxDocuments_SelectedIndexChanged(object sender, EventArgs e)
+
+    private void ListBoxDocuments_SelectedIndexChanged(object? sender, EventArgs e)
     {
-        if (listBoxDocuments.SelectedItem != null)
+        int selectedIndex = listBoxDocuments.SelectedIndex;
+
+        if (selectedIndex >= 0 && selectedIndex < documents.Count)
         {
-            labelInfo.Text = "Выбран документ:\n" + listBoxDocuments.SelectedItem.ToString();
+            FamilyDocument selectedDocument = documents[selectedIndex];
+            labelInfo.Text = "Выбран документ:\n" + selectedDocument.GetInfo();
         }
     }
 }
-
