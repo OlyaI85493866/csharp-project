@@ -26,8 +26,7 @@ public partial class Form1 : Form
     private CheckBox checkBoxImportant = null!;
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
-    private ListBox listBoxDocuments = null!;
-
+    private DataGridView dataGridViewDocuments = null!;
     public Form1()
     {
         InitializeComponent();
@@ -40,7 +39,7 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(700, 540);
+        this.Size = new Size(1000, 600);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -146,16 +145,36 @@ public partial class Form1 : Form
         buttonClear.Click += ButtonClear_Click;
         this.Controls.Add(buttonClear);
 
-        listBoxDocuments = new ListBox();
-        listBoxDocuments.Location = new Point(460, 30);
-        listBoxDocuments.Size = new Size(200, 235);
-        listBoxDocuments.SelectedIndexChanged += ListBoxDocuments_SelectedIndexChanged;
-        this.Controls.Add(listBoxDocuments);
+        dataGridViewDocuments = new DataGridView();
+        dataGridViewDocuments.Location = new Point(460, 60);
+        dataGridViewDocuments.Size = new Size(500, 250);
+        dataGridViewDocuments.ReadOnly = true;
+        dataGridViewDocuments.AllowUserToAddRows = false;
+        dataGridViewDocuments.AllowUserToDeleteRows = false;
+        dataGridViewDocuments.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        dataGridViewDocuments.MultiSelect = false;
+        dataGridViewDocuments.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+        dataGridViewDocuments.RowHeadersVisible = false;
+        dataGridViewDocuments.SelectionChanged += DataGridViewDocuments_SelectionChanged;
+
+        dataGridViewDocuments.Columns.Add("Id", "ID");
+        dataGridViewDocuments.Columns.Add("Title", "Название");
+        dataGridViewDocuments.Columns.Add("Category", "Тип");
+        dataGridViewDocuments.Columns.Add("Date", "Дата");
+        dataGridViewDocuments.Columns.Add("Status", "Статус");
+
+        dataGridViewDocuments.Columns["Id"].Width = 40;
+        dataGridViewDocuments.Columns["Title"].Width = 150;
+        dataGridViewDocuments.Columns["Category"].Width = 130;
+        dataGridViewDocuments.Columns["Date"].Width = 90;
+        dataGridViewDocuments.Columns["Status"].Width = 90;
+
+        this.Controls.Add(dataGridViewDocuments);
 
         labelInfo = new Label();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 330);
-        labelInfo.Size = new Size(630, 120);
+        labelInfo.Location = new Point(30, 340);
+        labelInfo.Size = new Size(930, 160);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
         labelInfo.BorderStyle = BorderStyle.FixedSingle;
@@ -166,22 +185,21 @@ public partial class Form1 : Form
 
     private void RefreshDocumentsList()
     {
-        listBoxDocuments.Items.Clear();
+        dataGridViewDocuments.Rows.Clear();
 
         foreach (FamilyDocument document in documents)
         {
             string importantText = document.IsImportant ? "важный" : "обычный";
 
-            string documentInfo =
-                document.Id + " - " + document.Title +
-                " | Тип: " + document.Category +
-                " | Дата: " + document.DocumentDate.ToShortDateString() +
-                " | Статус: " + importantText;
-
-            listBoxDocuments.Items.Add(documentInfo);
+            dataGridViewDocuments.Rows.Add(
+                document.Id,
+                document.Title,
+                document.Category,
+                document.DocumentDate.ToShortDateString(),
+                importantText
+            );
         }
     }
-
     private void NumericId_ValueChanged(object? sender, EventArgs e)
     {
         labelInfo.Text = "Выбран Id документа: " + numericId.Value;
@@ -252,9 +270,14 @@ public partial class Form1 : Form
         labelInfo.Text = "Поля очищены.";
     }
 
-    private void ListBoxDocuments_SelectedIndexChanged(object? sender, EventArgs e)
+    private void DataGridViewDocuments_SelectionChanged(object? sender, EventArgs e)
     {
-        int selectedIndex = listBoxDocuments.SelectedIndex;
+        if (dataGridViewDocuments.CurrentRow == null)
+        {
+            return;
+        }
+
+        int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
 
         if (selectedIndex >= 0 && selectedIndex < documents.Count)
         {
