@@ -34,6 +34,7 @@ public partial class Form1 : Form
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
     private Button buttonDelete = null!;
+    private Button buttonEdit = null!;
     private Button buttonResetSearch = null!;
 
     private DataGridView dataGridViewDocuments = null!;
@@ -169,6 +170,19 @@ public partial class Form1 : Form
         buttonDelete.Cursor = Cursors.Hand;
         buttonDelete.Click += ButtonDelete_Click;
         this.Controls.Add(buttonDelete);
+
+        buttonEdit = new Button();
+        buttonEdit.Text = "Изменить";
+        buttonEdit.Location = new Point(230, 320);
+        buttonEdit.Size = new Size(170, 40);
+        buttonEdit.BackColor = Color.FromArgb(46, 204, 113);
+        buttonEdit.ForeColor = Color.White;
+        buttonEdit.FlatStyle = FlatStyle.Flat;
+        buttonEdit.FlatAppearance.BorderSize = 0;
+        buttonEdit.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        buttonEdit.Cursor = Cursors.Hand;
+        buttonEdit.Click += ButtonEdit_Click;
+        this.Controls.Add(buttonEdit);
 
         labelSearch = new Label();
         labelSearch.Text = "Поиск:";
@@ -405,8 +419,56 @@ public partial class Form1 : Form
         if (selectedIndex >= 0 && selectedIndex < filteredDocuments.Count)
         {
             FamilyDocument selectedDocument = filteredDocuments[selectedIndex];
+
+            numericId.Value = selectedDocument.Id;
+            textBoxTitle.Text = selectedDocument.Title;
+
+            int categoryIndex = comboBoxType.Items.IndexOf(selectedDocument.Category);
+            if (categoryIndex >= 0)
+            {
+                comboBoxType.SelectedIndex = categoryIndex;
+            }
+
+            dateTimePickerDocument.Value = selectedDocument.DocumentDate;
+            checkBoxImportant.Checked = selectedDocument.IsImportant;
+
             labelInfo.Text = "Выбран документ:\n" + selectedDocument.GetInfo();
         }
+    }
+    private void ButtonEdit_Click(object? sender, EventArgs e)
+    {
+        if (dataGridViewDocuments.CurrentRow == null)
+        {
+            labelInfo.Text = "Выберите документ для изменения.";
+            return;
+        }
+
+        int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
+
+        if (selectedIndex < 0 || selectedIndex >= filteredDocuments.Count)
+        {
+            labelInfo.Text = "Документ для изменения не найден.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(textBoxTitle.Text))
+        {
+            labelInfo.Text = "Введите название документа.";
+            return;
+        }
+
+        FamilyDocument selectedDocument = filteredDocuments[selectedIndex];
+
+        selectedDocument.Id = (int)numericId.Value;
+        selectedDocument.Title = textBoxTitle.Text.Trim();
+        selectedDocument.Category = comboBoxType.SelectedItem?.ToString() ?? "Не указано";
+        selectedDocument.DocumentDate = dateTimePickerDocument.Value;
+        selectedDocument.IsImportant = checkBoxImportant.Checked;
+
+        storageService.SaveDocuments(documents);
+        ApplyFilters();
+
+        labelInfo.Text = "Документ изменен и сохранен:\n" + selectedDocument.GetInfo();
     }
 
     private void SearchControls_Changed(object? sender, EventArgs e)
