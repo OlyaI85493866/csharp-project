@@ -18,17 +18,26 @@ public partial class Form1 : Form
     private Label labelId = null!;
     private Label labelTitle = null!;
     private Label labelType = null!;
+    private Label labelOwner = null!;
+    private Label labelDocumentNumber = null!;
     private Label labelDate = null!;
-    private Label labelInfo = null!;
+    private Label labelExpirationDate = null!;
+    private Label labelComment = null!;
+    private TextBox labelInfo = null!;
     private Label labelSearch = null!;
     private Label labelFilter = null!;
 
     private NumericUpDown numericId = null!;
     private TextBox textBoxTitle = null!;
     private ComboBox comboBoxType = null!;
+    private TextBox textBoxOwner = null!;
+    private TextBox textBoxDocumentNumber = null!;
+    private DateTimePicker dateTimePickerDocument = null!;
+    private DateTimePicker dateTimePickerExpiration = null!;
+    private CheckBox checkBoxHasExpiration = null!;
+    private TextBox textBoxComment = null!;
     private TextBox textBoxSearch = null!;
     private ComboBox comboBoxFilter = null!;
-    private DateTimePicker dateTimePickerDocument = null!;
     private CheckBox checkBoxImportant = null!;
 
     private Button buttonAdd = null!;
@@ -52,7 +61,7 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1100, 660);
+        this.Size = new Size(1100, 880);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -112,29 +121,81 @@ public partial class Form1 : Form
         comboBoxType.SelectedIndexChanged += ComboBoxType_SelectedIndexChanged;
         this.Controls.Add(comboBoxType);
 
+        labelOwner = new Label();
+        labelOwner.Text = "Владелец:";
+        labelOwner.Location = new Point(30, 180);
+        labelOwner.AutoSize = true;
+        this.Controls.Add(labelOwner);
+
+        textBoxOwner = new TextBox();
+        textBoxOwner.Location = new Point(230, 180);
+        textBoxOwner.Size = new Size(200, 25);
+        this.Controls.Add(textBoxOwner);
+
+        labelDocumentNumber = new Label();
+        labelDocumentNumber.Text = "Номер документа:";
+        labelDocumentNumber.Location = new Point(30, 220);
+        labelDocumentNumber.AutoSize = true;
+        this.Controls.Add(labelDocumentNumber);
+
+        textBoxDocumentNumber = new TextBox();
+        textBoxDocumentNumber.Location = new Point(230, 220);
+        textBoxDocumentNumber.Size = new Size(200, 25);
+        this.Controls.Add(textBoxDocumentNumber);
+
         labelDate = new Label();
         labelDate.Text = "Дата документа:";
-        labelDate.Location = new Point(30, 180);
+        labelDate.Location = new Point(30, 260);
         labelDate.AutoSize = true;
         this.Controls.Add(labelDate);
 
         dateTimePickerDocument = new DateTimePicker();
-        dateTimePickerDocument.Location = new Point(230, 180);
+        dateTimePickerDocument.Location = new Point(230, 260);
         dateTimePickerDocument.Size = new Size(200, 25);
         dateTimePickerDocument.Format = DateTimePickerFormat.Short;
         dateTimePickerDocument.ValueChanged += DateTimePickerDocument_ValueChanged;
         this.Controls.Add(dateTimePickerDocument);
 
+        labelExpirationDate = new Label();
+        labelExpirationDate.Text = "Срок действия:";
+        labelExpirationDate.Location = new Point(30, 300);
+        labelExpirationDate.AutoSize = true;
+        this.Controls.Add(labelExpirationDate);
+
+        dateTimePickerExpiration = new DateTimePicker();
+        dateTimePickerExpiration.Location = new Point(230, 300);
+        dateTimePickerExpiration.Size = new Size(200, 25);
+        dateTimePickerExpiration.Format = DateTimePickerFormat.Short;
+        this.Controls.Add(dateTimePickerExpiration);
+
+        checkBoxHasExpiration = new CheckBox();
+        checkBoxHasExpiration.Text = "Есть срок действия";
+        checkBoxHasExpiration.Location = new Point(230, 330);
+        checkBoxHasExpiration.AutoSize = true;
+        this.Controls.Add(checkBoxHasExpiration);
+
+        labelComment = new Label();
+        labelComment.Text = "Комментарий:";
+        labelComment.Location = new Point(30, 365);
+        labelComment.AutoSize = true;
+        this.Controls.Add(labelComment);
+
+        textBoxComment = new TextBox();
+        textBoxComment.Location = new Point(230, 365);
+        textBoxComment.Size = new Size(200, 60);
+        textBoxComment.Multiline = true;
+        this.Controls.Add(textBoxComment);
+
         checkBoxImportant = new CheckBox();
         checkBoxImportant.Text = "Важный документ";
-        checkBoxImportant.Location = new Point(230, 220);
+        checkBoxImportant.Location = new Point(230, 435);
         checkBoxImportant.AutoSize = true;
         checkBoxImportant.CheckedChanged += CheckBoxImportant_CheckedChanged;
         this.Controls.Add(checkBoxImportant);
 
         buttonAdd = new Button();
         buttonAdd.Text = "Добавить";
-        buttonAdd.Location = new Point(30, 270);
+        buttonAdd.Location = new Point(30, 480);
         buttonAdd.Size = new Size(170, 40);
         buttonAdd.BackColor = Color.FromArgb(52, 152, 219);
         buttonAdd.ForeColor = Color.White;
@@ -147,7 +208,7 @@ public partial class Form1 : Form
 
         buttonClear = new Button();
         buttonClear.Text = "Очистить";
-        buttonClear.Location = new Point(230, 270);
+        buttonClear.Location = new Point(230, 480);
         buttonClear.Size = new Size(170, 40);
         buttonClear.BackColor = Color.FromArgb(149, 165, 166);
         buttonClear.ForeColor = Color.White;
@@ -160,7 +221,7 @@ public partial class Form1 : Form
 
         buttonDelete = new Button();
         buttonDelete.Text = "Удалить";
-        buttonDelete.Location = new Point(30, 320);
+        buttonDelete.Location = new Point(30, 530);
         buttonDelete.Size = new Size(170, 40);
         buttonDelete.BackColor = Color.FromArgb(231, 76, 60);
         buttonDelete.ForeColor = Color.White;
@@ -173,7 +234,7 @@ public partial class Form1 : Form
 
         buttonEdit = new Button();
         buttonEdit.Text = "Изменить";
-        buttonEdit.Location = new Point(230, 320);
+        buttonEdit.Location = new Point(230, 530);
         buttonEdit.Size = new Size(170, 40);
         buttonEdit.BackColor = Color.FromArgb(46, 204, 113);
         buttonEdit.ForeColor = Color.White;
@@ -255,14 +316,16 @@ public partial class Form1 : Form
         buttonResetSearch.Click += ButtonResetSearch_Click;
         this.Controls.Add(buttonResetSearch);
 
-        labelInfo = new Label();
+        labelInfo = new TextBox();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 450);
-        labelInfo.Size = new Size(1020, 140);
+        labelInfo.Location = new Point(30, 600);
+        labelInfo.Size = new Size(1020, 170);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
         labelInfo.BorderStyle = BorderStyle.FixedSingle;
-        labelInfo.Padding = new Padding(10);
+        labelInfo.Multiline = true;
+        labelInfo.ReadOnly = true;
+        labelInfo.ScrollBars = ScrollBars.Vertical;
         labelInfo.Font = new Font("Segoe UI", 10);
         this.Controls.Add(labelInfo);
     }
@@ -275,13 +338,15 @@ public partial class Form1 : Form
         {
             string importantText = document.IsImportant ? "важный" : "обычный";
 
-            dataGridViewDocuments.Rows.Add(
+            int rowIndex = dataGridViewDocuments.Rows.Add(
                 document.Id,
                 document.Title,
                 document.Category,
                 document.DocumentDate.ToShortDateString(),
                 importantText
             );
+
+            dataGridViewDocuments.Rows[rowIndex].Tag = document;
         }
     }
 
@@ -298,6 +363,25 @@ public partial class Form1 : Form
             .ToList();
 
         RefreshDocumentsList();
+    }
+
+    private string FormatDocumentInfo(FamilyDocument document)
+    {
+        string expirationDateText = document.ExpirationDate.HasValue
+            ? document.ExpirationDate.Value.ToShortDateString()
+            : "не указан";
+
+        return
+            "ID: " + document.Id + Environment.NewLine +
+            "Название: " + document.Title + Environment.NewLine +
+            "Категория: " + document.Category + Environment.NewLine +
+            "Владелец: " + document.Owner + Environment.NewLine +
+            "Номер документа: " + document.DocumentNumber + Environment.NewLine +
+            "Дата документа: " + document.DocumentDate.ToShortDateString() + Environment.NewLine +
+            "Срок действия: " + expirationDateText + Environment.NewLine +
+            "Важный документ: " + (document.IsImportant ? "да" : "нет") + Environment.NewLine +
+            "Файл: " + document.FilePath + Environment.NewLine +
+            "Комментарий: " + document.Comment;
     }
 
     private void NumericId_ValueChanged(object? sender, EventArgs e)
@@ -348,7 +432,13 @@ public partial class Form1 : Form
         FamilyDocument document = new FamilyDocument(id, title)
         {
             Category = type,
+            Owner = textBoxOwner.Text.Trim(),
+            DocumentNumber = textBoxDocumentNumber.Text.Trim(),
             DocumentDate = dateTimePickerDocument.Value,
+            ExpirationDate = checkBoxHasExpiration.Checked
+                ? dateTimePickerExpiration.Value
+                : null,
+            Comment = textBoxComment.Text.Trim(),
             IsImportant = checkBoxImportant.Checked
         };
 
@@ -356,7 +446,7 @@ public partial class Form1 : Form
         storageService.SaveDocuments(documents);
         ApplyFilters();
 
-        labelInfo.Text = "Документ добавлен и сохранен:\n" + document.GetInfo();
+        labelInfo.Text = "Документ добавлен и сохранен:" + Environment.NewLine + FormatDocumentInfo(document);
     }
 
     private void ButtonClear_Click(object? sender, EventArgs e)
@@ -364,10 +454,53 @@ public partial class Form1 : Form
         numericId.Value = 1;
         textBoxTitle.Clear();
         comboBoxType.SelectedIndex = 0;
+        textBoxOwner.Clear();
+        textBoxDocumentNumber.Clear();
         dateTimePickerDocument.Value = DateTime.Today;
+        checkBoxHasExpiration.Checked = false;
+        dateTimePickerExpiration.Value = DateTime.Today;
+        textBoxComment.Clear();
         checkBoxImportant.Checked = false;
 
         labelInfo.Text = "Поля очищены.";
+    }
+
+    private void ButtonEdit_Click(object? sender, EventArgs e)
+    {
+        if (dataGridViewDocuments.CurrentRow == null)
+        {
+            labelInfo.Text = "Выберите документ для изменения.";
+            return;
+        }
+
+        if (dataGridViewDocuments.CurrentRow.Tag is not FamilyDocument selectedDocument)
+        {
+            labelInfo.Text = "Документ для изменения не найден.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(textBoxTitle.Text))
+        {
+            labelInfo.Text = "Введите название документа.";
+            return;
+        }
+
+        selectedDocument.Id = (int)numericId.Value;
+        selectedDocument.Title = textBoxTitle.Text.Trim();
+        selectedDocument.Category = comboBoxType.SelectedItem?.ToString() ?? "Не указано";
+        selectedDocument.Owner = textBoxOwner.Text.Trim();
+        selectedDocument.DocumentNumber = textBoxDocumentNumber.Text.Trim();
+        selectedDocument.DocumentDate = dateTimePickerDocument.Value;
+        selectedDocument.ExpirationDate = checkBoxHasExpiration.Checked
+            ? dateTimePickerExpiration.Value
+            : null;
+        selectedDocument.Comment = textBoxComment.Text.Trim();
+        selectedDocument.IsImportant = checkBoxImportant.Checked;
+
+        storageService.SaveDocuments(documents);
+        ApplyFilters();
+
+        labelInfo.Text = "Документ изменен и сохранен:" + Environment.NewLine + FormatDocumentInfo(selectedDocument);
     }
 
     private void ButtonDelete_Click(object? sender, EventArgs e)
@@ -378,15 +511,11 @@ public partial class Form1 : Form
             return;
         }
 
-        int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
-
-        if (selectedIndex < 0 || selectedIndex >= filteredDocuments.Count)
+        if (dataGridViewDocuments.CurrentRow.Tag is not FamilyDocument selectedDocument)
         {
             labelInfo.Text = "Документ для удаления не найден.";
             return;
         }
-
-        FamilyDocument selectedDocument = filteredDocuments[selectedIndex];
 
         DialogResult result = MessageBox.Show(
             "Вы действительно хотите удалить документ?\n\n" + selectedDocument.Title,
@@ -404,7 +533,7 @@ public partial class Form1 : Form
         storageService.SaveDocuments(documents);
         ApplyFilters();
 
-        labelInfo.Text = "Документ удален:\n" + selectedDocument.GetInfo();
+        labelInfo.Text = "Документ удален:" + Environment.NewLine + FormatDocumentInfo(selectedDocument);
     }
 
     private void DataGridViewDocuments_SelectionChanged(object? sender, EventArgs e)
@@ -414,61 +543,39 @@ public partial class Form1 : Form
             return;
         }
 
-        int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
-
-        if (selectedIndex >= 0 && selectedIndex < filteredDocuments.Count)
+        if (dataGridViewDocuments.CurrentRow.Tag is not FamilyDocument selectedDocument)
         {
-            FamilyDocument selectedDocument = filteredDocuments[selectedIndex];
-
-            numericId.Value = selectedDocument.Id;
-            textBoxTitle.Text = selectedDocument.Title;
-
-            int categoryIndex = comboBoxType.Items.IndexOf(selectedDocument.Category);
-            if (categoryIndex >= 0)
-            {
-                comboBoxType.SelectedIndex = categoryIndex;
-            }
-
-            dateTimePickerDocument.Value = selectedDocument.DocumentDate;
-            checkBoxImportant.Checked = selectedDocument.IsImportant;
-
-            labelInfo.Text = "Выбран документ:\n" + selectedDocument.GetInfo();
-        }
-    }
-    private void ButtonEdit_Click(object? sender, EventArgs e)
-    {
-        if (dataGridViewDocuments.CurrentRow == null)
-        {
-            labelInfo.Text = "Выберите документ для изменения.";
             return;
         }
 
-        int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
+        numericId.Value = selectedDocument.Id;
+        textBoxTitle.Text = selectedDocument.Title;
 
-        if (selectedIndex < 0 || selectedIndex >= filteredDocuments.Count)
+        int categoryIndex = comboBoxType.Items.IndexOf(selectedDocument.Category);
+        if (categoryIndex >= 0)
         {
-            labelInfo.Text = "Документ для изменения не найден.";
-            return;
+            comboBoxType.SelectedIndex = categoryIndex;
         }
 
-        if (string.IsNullOrWhiteSpace(textBoxTitle.Text))
+        textBoxOwner.Text = selectedDocument.Owner;
+        textBoxDocumentNumber.Text = selectedDocument.DocumentNumber;
+        dateTimePickerDocument.Value = selectedDocument.DocumentDate;
+
+        if (selectedDocument.ExpirationDate.HasValue)
         {
-            labelInfo.Text = "Введите название документа.";
-            return;
+            checkBoxHasExpiration.Checked = true;
+            dateTimePickerExpiration.Value = selectedDocument.ExpirationDate.Value;
+        }
+        else
+        {
+            checkBoxHasExpiration.Checked = false;
+            dateTimePickerExpiration.Value = DateTime.Today;
         }
 
-        FamilyDocument selectedDocument = filteredDocuments[selectedIndex];
+        textBoxComment.Text = selectedDocument.Comment;
+        checkBoxImportant.Checked = selectedDocument.IsImportant;
 
-        selectedDocument.Id = (int)numericId.Value;
-        selectedDocument.Title = textBoxTitle.Text.Trim();
-        selectedDocument.Category = comboBoxType.SelectedItem?.ToString() ?? "Не указано";
-        selectedDocument.DocumentDate = dateTimePickerDocument.Value;
-        selectedDocument.IsImportant = checkBoxImportant.Checked;
-
-        storageService.SaveDocuments(documents);
-        ApplyFilters();
-
-        labelInfo.Text = "Документ изменен и сохранен:\n" + selectedDocument.GetInfo();
+        labelInfo.Text = "Выбран документ:" + Environment.NewLine + FormatDocumentInfo(selectedDocument);
     }
 
     private void SearchControls_Changed(object? sender, EventArgs e)
