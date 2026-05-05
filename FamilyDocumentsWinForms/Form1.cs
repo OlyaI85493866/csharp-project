@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using MyLibrary;
 using FamilyDocumentsWinForms.Services;
@@ -10,6 +11,7 @@ namespace FamilyDocumentsWinForms;
 public partial class Form1 : Form
 {
     private List<FamilyDocument> documents = new List<FamilyDocument>();
+    private List<FamilyDocument> filteredDocuments = new List<FamilyDocument>();
     private DocumentStorageService storageService = new DocumentStorageService();
 
     private Label labelHeader = null!;
@@ -18,29 +20,38 @@ public partial class Form1 : Form
     private Label labelType = null!;
     private Label labelDate = null!;
     private Label labelInfo = null!;
+    private Label labelSearch = null!;
+    private Label labelFilter = null!;
 
     private NumericUpDown numericId = null!;
     private TextBox textBoxTitle = null!;
     private ComboBox comboBoxType = null!;
+    private TextBox textBoxSearch = null!;
+    private ComboBox comboBoxFilter = null!;
     private DateTimePicker dateTimePickerDocument = null!;
     private CheckBox checkBoxImportant = null!;
+
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
     private Button buttonDelete = null!;
+    private Button buttonResetSearch = null!;
+
     private DataGridView dataGridViewDocuments = null!;
+
     public Form1()
     {
         InitializeComponent();
         CreateFormElements();
 
         documents = storageService.LoadDocuments();
+        filteredDocuments = new List<FamilyDocument>(documents);
         RefreshDocumentsList();
     }
 
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1000, 650);
+        this.Size = new Size(1100, 660);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -121,7 +132,7 @@ public partial class Form1 : Form
         this.Controls.Add(checkBoxImportant);
 
         buttonAdd = new Button();
-        buttonAdd.Text = "Добавить документ";
+        buttonAdd.Text = "Добавить";
         buttonAdd.Location = new Point(30, 270);
         buttonAdd.Size = new Size(170, 40);
         buttonAdd.BackColor = Color.FromArgb(52, 152, 219);
@@ -159,9 +170,41 @@ public partial class Form1 : Form
         buttonDelete.Click += ButtonDelete_Click;
         this.Controls.Add(buttonDelete);
 
+        labelSearch = new Label();
+        labelSearch.Text = "Поиск:";
+        labelSearch.Location = new Point(460, 55);
+        labelSearch.AutoSize = true;
+        this.Controls.Add(labelSearch);
+
+        textBoxSearch = new TextBox();
+        textBoxSearch.Location = new Point(530, 52);
+        textBoxSearch.Size = new Size(180, 25);
+        textBoxSearch.TextChanged += SearchControls_Changed;
+        this.Controls.Add(textBoxSearch);
+
+        labelFilter = new Label();
+        labelFilter.Text = "Тип:";
+        labelFilter.Location = new Point(740, 55);
+        labelFilter.AutoSize = true;
+        this.Controls.Add(labelFilter);
+
+        comboBoxFilter = new ComboBox();
+        comboBoxFilter.Location = new Point(790, 52);
+        comboBoxFilter.Size = new Size(260, 25);
+        comboBoxFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+        comboBoxFilter.Items.Add("Все");
+        comboBoxFilter.Items.Add("Паспорт");
+        comboBoxFilter.Items.Add("Свидетельство");
+        comboBoxFilter.Items.Add("Медицинский документ");
+        comboBoxFilter.Items.Add("Договор");
+        comboBoxFilter.Items.Add("Квитанция");
+        comboBoxFilter.SelectedIndex = 0;
+        comboBoxFilter.SelectedIndexChanged += SearchControls_Changed;
+        this.Controls.Add(comboBoxFilter);
+
         dataGridViewDocuments = new DataGridView();
-        dataGridViewDocuments.Location = new Point(460, 60);
-        dataGridViewDocuments.Size = new Size(500, 250);
+        dataGridViewDocuments.Location = new Point(460, 100);
+        dataGridViewDocuments.Size = new Size(590, 270);
         dataGridViewDocuments.ReadOnly = true;
         dataGridViewDocuments.AllowUserToAddRows = false;
         dataGridViewDocuments.AllowUserToDeleteRows = false;
@@ -177,18 +220,31 @@ public partial class Form1 : Form
         dataGridViewDocuments.Columns.Add("Date", "Дата");
         dataGridViewDocuments.Columns.Add("Status", "Статус");
 
-        dataGridViewDocuments.Columns["Id"].Width = 40;
-        dataGridViewDocuments.Columns["Title"].Width = 150;
-        dataGridViewDocuments.Columns["Category"].Width = 130;
-        dataGridViewDocuments.Columns["Date"].Width = 90;
+        dataGridViewDocuments.Columns["Id"].Width = 50;
+        dataGridViewDocuments.Columns["Title"].Width = 190;
+        dataGridViewDocuments.Columns["Category"].Width = 160;
+        dataGridViewDocuments.Columns["Date"].Width = 100;
         dataGridViewDocuments.Columns["Status"].Width = 90;
 
         this.Controls.Add(dataGridViewDocuments);
 
+        buttonResetSearch = new Button();
+        buttonResetSearch.Text = "Сбросить";
+        buttonResetSearch.Location = new Point(880, 390);
+        buttonResetSearch.Size = new Size(170, 40);
+        buttonResetSearch.BackColor = Color.FromArgb(149, 165, 166);
+        buttonResetSearch.ForeColor = Color.White;
+        buttonResetSearch.FlatStyle = FlatStyle.Flat;
+        buttonResetSearch.FlatAppearance.BorderSize = 0;
+        buttonResetSearch.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        buttonResetSearch.Cursor = Cursors.Hand;
+        buttonResetSearch.Click += ButtonResetSearch_Click;
+        this.Controls.Add(buttonResetSearch);
+
         labelInfo = new Label();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 380);
-        labelInfo.Size = new Size(930, 190);
+        labelInfo.Location = new Point(30, 450);
+        labelInfo.Size = new Size(1020, 140);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
         labelInfo.BorderStyle = BorderStyle.FixedSingle;
@@ -201,7 +257,7 @@ public partial class Form1 : Form
     {
         dataGridViewDocuments.Rows.Clear();
 
-        foreach (FamilyDocument document in documents)
+        foreach (FamilyDocument document in filteredDocuments)
         {
             string importantText = document.IsImportant ? "важный" : "обычный";
 
@@ -214,6 +270,22 @@ public partial class Form1 : Form
             );
         }
     }
+
+    private void ApplyFilters()
+    {
+        string searchText = textBoxSearch.Text.Trim().ToLower();
+        string selectedCategory = comboBoxFilter.SelectedItem?.ToString() ?? "Все";
+
+        filteredDocuments = documents
+            .Where(document =>
+                document.Title.ToLower().Contains(searchText) &&
+                (selectedCategory == "Все" || document.Category == selectedCategory)
+            )
+            .ToList();
+
+        RefreshDocumentsList();
+    }
+
     private void NumericId_ValueChanged(object? sender, EventArgs e)
     {
         labelInfo.Text = "Выбран Id документа: " + numericId.Value;
@@ -268,7 +340,7 @@ public partial class Form1 : Form
 
         documents.Add(document);
         storageService.SaveDocuments(documents);
-        RefreshDocumentsList();
+        ApplyFilters();
 
         labelInfo.Text = "Документ добавлен и сохранен:\n" + document.GetInfo();
     }
@@ -294,13 +366,13 @@ public partial class Form1 : Form
 
         int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
 
-        if (selectedIndex < 0 || selectedIndex >= documents.Count)
+        if (selectedIndex < 0 || selectedIndex >= filteredDocuments.Count)
         {
             labelInfo.Text = "Документ для удаления не найден.";
             return;
         }
 
-        FamilyDocument selectedDocument = documents[selectedIndex];
+        FamilyDocument selectedDocument = filteredDocuments[selectedIndex];
 
         DialogResult result = MessageBox.Show(
             "Вы действительно хотите удалить документ?\n\n" + selectedDocument.Title,
@@ -314,12 +386,13 @@ public partial class Form1 : Form
             return;
         }
 
-        documents.RemoveAt(selectedIndex);
+        documents.Remove(selectedDocument);
         storageService.SaveDocuments(documents);
-        RefreshDocumentsList();
+        ApplyFilters();
 
         labelInfo.Text = "Документ удален:\n" + selectedDocument.GetInfo();
     }
+
     private void DataGridViewDocuments_SelectionChanged(object? sender, EventArgs e)
     {
         if (dataGridViewDocuments.CurrentRow == null)
@@ -329,10 +402,22 @@ public partial class Form1 : Form
 
         int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
 
-        if (selectedIndex >= 0 && selectedIndex < documents.Count)
+        if (selectedIndex >= 0 && selectedIndex < filteredDocuments.Count)
         {
-            FamilyDocument selectedDocument = documents[selectedIndex];
+            FamilyDocument selectedDocument = filteredDocuments[selectedIndex];
             labelInfo.Text = "Выбран документ:\n" + selectedDocument.GetInfo();
         }
+    }
+
+    private void SearchControls_Changed(object? sender, EventArgs e)
+    {
+        ApplyFilters();
+    }
+
+    private void ButtonResetSearch_Click(object? sender, EventArgs e)
+    {
+        textBoxSearch.Clear();
+        comboBoxFilter.SelectedIndex = 0;
+        ApplyFilters();
     }
 }
