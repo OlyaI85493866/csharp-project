@@ -26,6 +26,7 @@ public partial class Form1 : Form
     private CheckBox checkBoxImportant = null!;
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
+    private Button buttonDelete = null!;
     private DataGridView dataGridViewDocuments = null!;
     public Form1()
     {
@@ -39,7 +40,7 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1000, 600);
+        this.Size = new Size(1000, 650);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -145,6 +146,19 @@ public partial class Form1 : Form
         buttonClear.Click += ButtonClear_Click;
         this.Controls.Add(buttonClear);
 
+        buttonDelete = new Button();
+        buttonDelete.Text = "Удалить";
+        buttonDelete.Location = new Point(30, 320);
+        buttonDelete.Size = new Size(170, 40);
+        buttonDelete.BackColor = Color.FromArgb(231, 76, 60);
+        buttonDelete.ForeColor = Color.White;
+        buttonDelete.FlatStyle = FlatStyle.Flat;
+        buttonDelete.FlatAppearance.BorderSize = 0;
+        buttonDelete.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        buttonDelete.Cursor = Cursors.Hand;
+        buttonDelete.Click += ButtonDelete_Click;
+        this.Controls.Add(buttonDelete);
+
         dataGridViewDocuments = new DataGridView();
         dataGridViewDocuments.Location = new Point(460, 60);
         dataGridViewDocuments.Size = new Size(500, 250);
@@ -173,8 +187,8 @@ public partial class Form1 : Form
 
         labelInfo = new Label();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 340);
-        labelInfo.Size = new Size(930, 160);
+        labelInfo.Location = new Point(30, 380);
+        labelInfo.Size = new Size(930, 190);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
         labelInfo.BorderStyle = BorderStyle.FixedSingle;
@@ -270,6 +284,42 @@ public partial class Form1 : Form
         labelInfo.Text = "Поля очищены.";
     }
 
+    private void ButtonDelete_Click(object? sender, EventArgs e)
+    {
+        if (dataGridViewDocuments.CurrentRow == null)
+        {
+            labelInfo.Text = "Выберите документ для удаления.";
+            return;
+        }
+
+        int selectedIndex = dataGridViewDocuments.CurrentRow.Index;
+
+        if (selectedIndex < 0 || selectedIndex >= documents.Count)
+        {
+            labelInfo.Text = "Документ для удаления не найден.";
+            return;
+        }
+
+        FamilyDocument selectedDocument = documents[selectedIndex];
+
+        DialogResult result = MessageBox.Show(
+            "Вы действительно хотите удалить документ?\n\n" + selectedDocument.Title,
+            "Подтверждение удаления",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (result != DialogResult.Yes)
+        {
+            return;
+        }
+
+        documents.RemoveAt(selectedIndex);
+        storageService.SaveDocuments(documents);
+        RefreshDocumentsList();
+
+        labelInfo.Text = "Документ удален:\n" + selectedDocument.GetInfo();
+    }
     private void DataGridViewDocuments_SelectionChanged(object? sender, EventArgs e)
     {
         if (dataGridViewDocuments.CurrentRow == null)
