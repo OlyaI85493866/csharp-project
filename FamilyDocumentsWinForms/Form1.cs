@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -23,10 +24,10 @@ public partial class Form1 : Form
     private Label labelDate = null!;
     private Label labelExpirationDate = null!;
     private Label labelComment = null!;
+    private Label labelFile = null!;
     private TextBox labelInfo = null!;
     private Label labelSearch = null!;
     private Label labelFilter = null!;
-
     private NumericUpDown numericId = null!;
     private TextBox textBoxTitle = null!;
     private ComboBox comboBoxType = null!;
@@ -36,16 +37,17 @@ public partial class Form1 : Form
     private DateTimePicker dateTimePickerExpiration = null!;
     private CheckBox checkBoxHasExpiration = null!;
     private TextBox textBoxComment = null!;
+    private TextBox textBoxFilePath = null!;
     private TextBox textBoxSearch = null!;
     private ComboBox comboBoxFilter = null!;
     private CheckBox checkBoxImportant = null!;
-
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
     private Button buttonDelete = null!;
     private Button buttonEdit = null!;
+    private Button buttonSelectFile = null!;
+    private Button buttonOpenFile = null!;
     private Button buttonResetSearch = null!;
-
     private DataGridView dataGridViewDocuments = null!;
 
     public Form1()
@@ -61,7 +63,7 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1100, 880);
+        this.Size = new Size(1100, 930);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -186,16 +188,54 @@ public partial class Form1 : Form
         textBoxComment.Multiline = true;
         this.Controls.Add(textBoxComment);
 
+        labelFile = new Label();
+        labelFile.Text = "Файл:";
+        labelFile.Location = new Point(30, 435);
+        labelFile.AutoSize = true;
+        this.Controls.Add(labelFile);
+
+        textBoxFilePath = new TextBox();
+        textBoxFilePath.Location = new Point(230, 435);
+        textBoxFilePath.Size = new Size(200, 25);
+        textBoxFilePath.ReadOnly = true;
+        this.Controls.Add(textBoxFilePath);
+
+        buttonSelectFile = new Button();
+        buttonSelectFile.Text = "Выбрать файл";
+        buttonSelectFile.Location = new Point(230, 470);
+        buttonSelectFile.Size = new Size(200, 35);
+        buttonSelectFile.BackColor = Color.FromArgb(155, 89, 182);
+        buttonSelectFile.ForeColor = Color.White;
+        buttonSelectFile.FlatStyle = FlatStyle.Flat;
+        buttonSelectFile.FlatAppearance.BorderSize = 0;
+        buttonSelectFile.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        buttonSelectFile.Cursor = Cursors.Hand;
+        buttonSelectFile.Click += ButtonSelectFile_Click;
+        this.Controls.Add(buttonSelectFile);
+
+        buttonOpenFile = new Button();
+        buttonOpenFile.Text = "Открыть файл";
+        buttonOpenFile.Location = new Point(30, 470);
+        buttonOpenFile.Size = new Size(170, 35);
+        buttonOpenFile.BackColor = Color.FromArgb(52, 73, 94);
+        buttonOpenFile.ForeColor = Color.White;
+        buttonOpenFile.FlatStyle = FlatStyle.Flat;
+        buttonOpenFile.FlatAppearance.BorderSize = 0;
+        buttonOpenFile.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        buttonOpenFile.Cursor = Cursors.Hand;
+        buttonOpenFile.Click += ButtonOpenFile_Click;
+        this.Controls.Add(buttonOpenFile);
+
         checkBoxImportant = new CheckBox();
         checkBoxImportant.Text = "Важный документ";
-        checkBoxImportant.Location = new Point(230, 435);
+        checkBoxImportant.Location = new Point(230, 510);
         checkBoxImportant.AutoSize = true;
         checkBoxImportant.CheckedChanged += CheckBoxImportant_CheckedChanged;
         this.Controls.Add(checkBoxImportant);
 
         buttonAdd = new Button();
         buttonAdd.Text = "Добавить";
-        buttonAdd.Location = new Point(30, 480);
+        buttonAdd.Location = new Point(30, 555);
         buttonAdd.Size = new Size(170, 40);
         buttonAdd.BackColor = Color.FromArgb(52, 152, 219);
         buttonAdd.ForeColor = Color.White;
@@ -208,7 +248,7 @@ public partial class Form1 : Form
 
         buttonClear = new Button();
         buttonClear.Text = "Очистить";
-        buttonClear.Location = new Point(230, 480);
+        buttonClear.Location = new Point(230, 555);
         buttonClear.Size = new Size(170, 40);
         buttonClear.BackColor = Color.FromArgb(149, 165, 166);
         buttonClear.ForeColor = Color.White;
@@ -221,7 +261,7 @@ public partial class Form1 : Form
 
         buttonDelete = new Button();
         buttonDelete.Text = "Удалить";
-        buttonDelete.Location = new Point(30, 530);
+        buttonDelete.Location = new Point(30, 605);
         buttonDelete.Size = new Size(170, 40);
         buttonDelete.BackColor = Color.FromArgb(231, 76, 60);
         buttonDelete.ForeColor = Color.White;
@@ -234,7 +274,7 @@ public partial class Form1 : Form
 
         buttonEdit = new Button();
         buttonEdit.Text = "Изменить";
-        buttonEdit.Location = new Point(230, 530);
+        buttonEdit.Location = new Point(230, 605);
         buttonEdit.Size = new Size(170, 40);
         buttonEdit.BackColor = Color.FromArgb(46, 204, 113);
         buttonEdit.ForeColor = Color.White;
@@ -318,7 +358,7 @@ public partial class Form1 : Form
 
         labelInfo = new TextBox();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 600);
+        labelInfo.Location = new Point(30, 680);
         labelInfo.Size = new Size(1020, 170);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
@@ -438,6 +478,7 @@ public partial class Form1 : Form
             ExpirationDate = checkBoxHasExpiration.Checked
                 ? dateTimePickerExpiration.Value
                 : null,
+            FilePath = textBoxFilePath.Text.Trim(),
             Comment = textBoxComment.Text.Trim(),
             IsImportant = checkBoxImportant.Checked
         };
@@ -459,6 +500,7 @@ public partial class Form1 : Form
         dateTimePickerDocument.Value = DateTime.Today;
         checkBoxHasExpiration.Checked = false;
         dateTimePickerExpiration.Value = DateTime.Today;
+        textBoxFilePath.Clear();
         textBoxComment.Clear();
         checkBoxImportant.Checked = false;
 
@@ -494,6 +536,7 @@ public partial class Form1 : Form
         selectedDocument.ExpirationDate = checkBoxHasExpiration.Checked
             ? dateTimePickerExpiration.Value
             : null;
+        selectedDocument.FilePath = textBoxFilePath.Text.Trim();
         selectedDocument.Comment = textBoxComment.Text.Trim();
         selectedDocument.IsImportant = checkBoxImportant.Checked;
 
@@ -535,7 +578,30 @@ public partial class Form1 : Form
 
         labelInfo.Text = "Документ удален:" + Environment.NewLine + FormatDocumentInfo(selectedDocument);
     }
+    private void ButtonOpenFile_Click(object? sender, EventArgs e)
+    {
+        string filePath = textBoxFilePath.Text.Trim();
 
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            labelInfo.Text = "Файл для открытия не выбран.";
+            return;
+        }
+
+        if (!File.Exists(filePath))
+        {
+            labelInfo.Text = "Файл не найден:" + Environment.NewLine + filePath;
+            return;
+        }
+
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = filePath,
+            UseShellExecute = true
+        };
+
+        Process.Start(startInfo);
+    }
     private void DataGridViewDocuments_SelectionChanged(object? sender, EventArgs e)
     {
         if (dataGridViewDocuments.CurrentRow == null)
@@ -572,6 +638,7 @@ public partial class Form1 : Form
             dateTimePickerExpiration.Value = DateTime.Today;
         }
 
+        textBoxFilePath.Text = selectedDocument.FilePath;
         textBoxComment.Text = selectedDocument.Comment;
         checkBoxImportant.Checked = selectedDocument.IsImportant;
 
@@ -588,5 +655,18 @@ public partial class Form1 : Form
         textBoxSearch.Clear();
         comboBoxFilter.SelectedIndex = 0;
         ApplyFilters();
+    }
+     private void ButtonSelectFile_Click(object? sender, EventArgs e)
+    {
+        using OpenFileDialog openFileDialog = new OpenFileDialog();
+
+        openFileDialog.Title = "Выберите файл документа";
+        openFileDialog.Filter = "Документы и изображения|*.pdf;*.jpg;*.jpeg;*.png;*.docx;*.doc|Все файлы|*.*";
+
+        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        {
+            textBoxFilePath.Text = openFileDialog.FileName;
+            labelInfo.Text = "Выбран файл:" + Environment.NewLine + openFileDialog.FileName;
+        }
     }
 }
