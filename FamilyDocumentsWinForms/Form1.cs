@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using MyLibrary;
 using FamilyDocumentsWinForms.Services;
 using Microsoft.VisualBasic;
+using FamilyDocumentsWinForms.Controls;
 
 namespace FamilyDocumentsWinForms;
 
@@ -17,9 +18,11 @@ public partial class Form1 : Form
     private List<FamilyDocument> documents = new List<FamilyDocument>();
     private List<FamilyDocument> filteredDocuments = new List<FamilyDocument>();
     private List<string> owners = new List<string>();
+    private List<string> documentTypes = new List<string>();
 
     private DocumentStorageService storageService = new DocumentStorageService();
     private OwnerStorageService ownerStorageService = new OwnerStorageService();
+    private DocumentTypeStorageService documentTypeStorageService = new DocumentTypeStorageService();
 
     private Label labelHeader = null!;
     private Label labelId = null!;
@@ -53,18 +56,32 @@ public partial class Form1 : Form
     private CheckBox checkBoxImportant = null!;
     private CheckBox checkBoxOnlyImportant = null!;
 
-    private Button buttonAdd = null!;
-    private Button buttonClear = null!;
-    private Button buttonEdit = null!;
-    private Button buttonSelectFile = null!;
-    private Button buttonOpenFile = null!;
-    private Button buttonResetSearch = null!;
-    private Button buttonDeleteAll = null!;
-    private Button buttonAddOwner = null!;
-    private Button buttonStatistics = null!;
+    private RoundedButton buttonAdd = null!;
+    private RoundedButton buttonClear = null!;
+    private RoundedButton buttonEdit = null!;
+    private RoundedButton buttonSelectFile = null!;
+    private RoundedButton buttonOpenFile = null!;
+    private RoundedButton buttonResetSearch = null!;
+    private RoundedButton buttonDeleteAll = null!;
+    private RoundedButton buttonAddOwner = null!;
+    private RoundedButton buttonAddType = null!;
+    private RoundedButton buttonStatistics = null!;
 
     private DataGridView dataGridViewDocuments = null!;
     private ContextMenuStrip documentContextMenu = null!;
+    private ToolTip toolTip = null!;
+
+    private RoundedPanel panelDocument = null!;
+    private RoundedPanel panelDocuments = null!;
+    private RoundedPanel panelInfo = null!;
+
+    private Panel shadowDocument = null!;
+    private Panel shadowDocuments = null!;
+    private Panel shadowInfo = null!;
+
+    private Label labelDocumentPanelTitle = null!;
+    private Label labelDocumentsPanelTitle = null!;
+    private Label labelInfoPanelTitle = null!;
 
     public Form1(string role)
     {
@@ -75,7 +92,9 @@ public partial class Form1 : Form
 
         documents = storageService.LoadDocuments();
         owners = ownerStorageService.LoadOwners();
+        documentTypes = documentTypeStorageService.LoadTypes();
 
+        RefreshDocumentTypesList();
         RefreshOwnersList();
 
         filteredDocuments = new List<FamilyDocument>(documents);
@@ -88,84 +107,152 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1250, 960);
+        this.Size = new Size(1250, 980);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
+        this.FormBorderStyle = FormBorderStyle.FixedSingle;
+        this.MaximizeBox = false;
+
+        toolTip = new ToolTip();
+        toolTip.AutoPopDelay = 5000;
+        toolTip.InitialDelay = 400;
+        toolTip.ReshowDelay = 200;
+        toolTip.ShowAlways = true;
 
         labelHeader = new Label();
         labelHeader.Text = "Семейная документация";
         labelHeader.Location = new Point(30, 10);
         labelHeader.AutoSize = true;
-        labelHeader.Font = new Font("Segoe UI", 16, FontStyle.Bold);
+        labelHeader.Font = new Font("Segoe UI", 18, FontStyle.Bold);
         labelHeader.ForeColor = Color.FromArgb(44, 62, 80);
         this.Controls.Add(labelHeader);
 
+        shadowDocument = CreateShadowPanel(new Point(20, 75), new Size(420, 650));
+        this.Controls.Add(shadowDocument);
+
+        panelDocument = new RoundedPanel();
+        panelDocument.Location = new Point(20, 75);
+        panelDocument.Size = new Size(420, 650);
+        panelDocument.CornerRadius = 18;
+        panelDocument.BorderColor = Color.FromArgb(225, 230, 235);
+        this.Controls.Add(panelDocument);
+        panelDocument.BringToFront();
+
+        shadowDocuments = CreateShadowPanel(new Point(455, 75), new Size(770, 650));
+        this.Controls.Add(shadowDocuments);
+
+        panelDocuments = new RoundedPanel();
+        panelDocuments.Location = new Point(455, 75);
+        panelDocuments.Size = new Size(770, 650);
+        panelDocuments.CornerRadius = 18;
+        panelDocuments.BorderColor = Color.FromArgb(225, 230, 235);
+        this.Controls.Add(panelDocuments);
+        panelDocuments.BringToFront();
+
+        shadowInfo = CreateShadowPanel(new Point(20, 735), new Size(1205, 170));
+        this.Controls.Add(shadowInfo);
+
+        panelInfo = new RoundedPanel();
+        panelInfo.Location = new Point(20, 735);
+        panelInfo.Size = new Size(1205, 170);
+        panelInfo.CornerRadius = 18;
+        panelInfo.BorderColor = Color.FromArgb(225, 230, 235);
+        this.Controls.Add(panelInfo);
+        panelInfo.BringToFront();
+
+        labelDocumentPanelTitle = new Label();
+        labelDocumentPanelTitle.Text = "Документ";
+        labelDocumentPanelTitle.Location = new Point(20, 10);
+        labelDocumentPanelTitle.AutoSize = true;
+        labelDocumentPanelTitle.Font = new Font("Segoe UI", 13, FontStyle.Bold);
+        labelDocumentPanelTitle.ForeColor = Color.FromArgb(44, 62, 80);
+        panelDocument.Controls.Add(labelDocumentPanelTitle);
+
+        labelDocumentsPanelTitle = new Label();
+        labelDocumentsPanelTitle.Text = "Документы";
+        labelDocumentsPanelTitle.Location = new Point(10, 10);
+        labelDocumentsPanelTitle.AutoSize = true;
+        labelDocumentsPanelTitle.Font = new Font("Segoe UI", 13, FontStyle.Bold);
+        labelDocumentsPanelTitle.ForeColor = Color.FromArgb(44, 62, 80);
+        panelDocuments.Controls.Add(labelDocumentsPanelTitle);
+
+        labelInfoPanelTitle = new Label();
+        labelInfoPanelTitle.Text = "Информация о документе";
+        labelInfoPanelTitle.Location = new Point(20, 15);
+        labelInfoPanelTitle.AutoSize = true;
+        labelInfoPanelTitle.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+        labelInfoPanelTitle.ForeColor = Color.FromArgb(44, 62, 80);
+        panelInfo.Controls.Add(labelInfoPanelTitle);
+
         labelId = new Label();
         labelId.Text = "Id документа:";
-        labelId.Location = new Point(30, 60);
+        labelId.Location = new Point(20, 55);
         labelId.AutoSize = true;
         StyleLabel(labelId);
-        this.Controls.Add(labelId);
+        panelDocument.Controls.Add(labelId);
 
         numericId = new NumericUpDown();
-        numericId.Location = new Point(180, 60);
-        numericId.Size = new Size(200, 25);
+        numericId.Location = new Point(210, 52);
+        numericId.Size = new Size(170, 25);
         numericId.Minimum = 1;
         numericId.Maximum = 10000;
         numericId.BackColor = Color.White;
         numericId.ForeColor = Color.FromArgb(44, 62, 80);
         numericId.ValueChanged += NumericId_ValueChanged;
-        this.Controls.Add(numericId);
+        panelDocument.Controls.Add(numericId);
 
         labelTitle = new Label();
         labelTitle.Text = "Название документа:";
-        labelTitle.Location = new Point(30, 100);
+        labelTitle.Location = new Point(20, 95);
         labelTitle.AutoSize = true;
         StyleLabel(labelTitle);
-        this.Controls.Add(labelTitle);
+        panelDocument.Controls.Add(labelTitle);
 
         textBoxTitle = new TextBox();
-        textBoxTitle.Location = new Point(230, 100);
-        textBoxTitle.Size = new Size(200, 25);
+        textBoxTitle.Location = new Point(210, 92);
+        textBoxTitle.Size = new Size(170, 25);
         StyleTextBox(textBoxTitle);
         textBoxTitle.TextChanged += TextBoxTitle_TextChanged;
-        this.Controls.Add(textBoxTitle);
+        panelDocument.Controls.Add(textBoxTitle);
 
         labelType = new Label();
         labelType.Text = "Тип документа:";
-        labelType.Location = new Point(30, 140);
+        labelType.Location = new Point(20, 135);
         labelType.AutoSize = true;
         StyleLabel(labelType);
-        this.Controls.Add(labelType);
+        panelDocument.Controls.Add(labelType);
 
         comboBoxType = new ComboBox();
-        comboBoxType.Location = new Point(230, 140);
-        comboBoxType.Size = new Size(200, 25);
+        comboBoxType.Location = new Point(210, 132);
+        comboBoxType.Size = new Size(125, 25);
         comboBoxType.DropDownStyle = ComboBoxStyle.DropDownList;
-        comboBoxType.Items.Add("Паспорт");
-        comboBoxType.Items.Add("Свидетельство");
-        comboBoxType.Items.Add("Медицинский документ");
-        comboBoxType.Items.Add("Договор");
-        comboBoxType.Items.Add("Квитанция");
-        comboBoxType.SelectedIndex = 0;
         StyleComboBox(comboBoxType);
         comboBoxType.SelectedIndexChanged += ComboBoxType_SelectedIndexChanged;
-        this.Controls.Add(comboBoxType);
+        comboBoxType.MouseHover += ComboBoxType_MouseHover;
+        panelDocument.Controls.Add(comboBoxType);
+
+        buttonAddType = new RoundedButton();
+        buttonAddType.Text = "+";
+        buttonAddType.Location = new Point(345, 132);
+        buttonAddType.Size = new Size(35, 26);
+        StyleSmallButton(buttonAddType, Color.FromArgb(52, 152, 219));
+        buttonAddType.Click += ButtonAddType_Click;
+        panelDocument.Controls.Add(buttonAddType);
 
         labelOwner = new Label();
         labelOwner.Text = "Владелец:";
-        labelOwner.Location = new Point(30, 180);
+        labelOwner.Location = new Point(20, 175);
         labelOwner.AutoSize = true;
         StyleLabel(labelOwner);
-        this.Controls.Add(labelOwner);
+        panelDocument.Controls.Add(labelOwner);
 
         comboBoxOwner = new ComboBox();
-        comboBoxOwner.Location = new Point(230, 180);
-        comboBoxOwner.Size = new Size(130, 25);
+        comboBoxOwner.Location = new Point(210, 172);
+        comboBoxOwner.Size = new Size(125, 25);
         comboBoxOwner.DropDownStyle = ComboBoxStyle.DropDownList;
         StyleComboBox(comboBoxOwner);
-        this.Controls.Add(comboBoxOwner);
+        panelDocument.Controls.Add(comboBoxOwner);
 
         ownerContextMenu = new ContextMenuStrip();
 
@@ -175,210 +262,206 @@ public partial class Form1 : Form
         ownerContextMenu.Items.Add(deleteOwnerMenuItem);
         comboBoxOwner.ContextMenuStrip = ownerContextMenu;
 
-        buttonAddOwner = new Button();
+        buttonAddOwner = new RoundedButton();
         buttonAddOwner.Text = "+";
-        buttonAddOwner.Location = new Point(370, 180);
-        buttonAddOwner.Size = new Size(60, 32);
+        buttonAddOwner.Location = new Point(345, 172);
+        buttonAddOwner.Size = new Size(35, 26);
         StyleSmallButton(buttonAddOwner, Color.FromArgb(52, 152, 219));
         buttonAddOwner.Click += ButtonAddOwner_Click;
-        this.Controls.Add(buttonAddOwner);
+        panelDocument.Controls.Add(buttonAddOwner);
 
         labelDocumentNumber = new Label();
         labelDocumentNumber.Text = "Номер документа:";
-        labelDocumentNumber.Location = new Point(30, 220);
+        labelDocumentNumber.Location = new Point(20, 215);
         labelDocumentNumber.AutoSize = true;
         StyleLabel(labelDocumentNumber);
-        this.Controls.Add(labelDocumentNumber);
+        panelDocument.Controls.Add(labelDocumentNumber);
 
         textBoxDocumentNumber = new TextBox();
-        textBoxDocumentNumber.Location = new Point(230, 220);
-        textBoxDocumentNumber.Size = new Size(200, 25);
+        textBoxDocumentNumber.Location = new Point(210, 212);
+        textBoxDocumentNumber.Size = new Size(170, 25);
         StyleTextBox(textBoxDocumentNumber);
-        this.Controls.Add(textBoxDocumentNumber);
+        panelDocument.Controls.Add(textBoxDocumentNumber);
 
         labelDate = new Label();
         labelDate.Text = "Дата документа:";
-        labelDate.Location = new Point(30, 260);
+        labelDate.Location = new Point(20, 255);
         labelDate.AutoSize = true;
         StyleLabel(labelDate);
-        this.Controls.Add(labelDate);
+        panelDocument.Controls.Add(labelDate);
 
         dateTimePickerDocument = new DateTimePicker();
-        dateTimePickerDocument.Location = new Point(230, 260);
-        dateTimePickerDocument.Size = new Size(200, 25);
-        dateTimePickerDocument.Format = DateTimePickerFormat.Short;
+        dateTimePickerDocument.Location = new Point(210, 252);
+        dateTimePickerDocument.Size = new Size(170, 25);
+        dateTimePickerDocument.Format = DateTimePickerFormat.Custom;
+        dateTimePickerDocument.CustomFormat = "dd.MM.yyyy";
         dateTimePickerDocument.ValueChanged += DateTimePickerDocument_ValueChanged;
-        this.Controls.Add(dateTimePickerDocument);
+        panelDocument.Controls.Add(dateTimePickerDocument);
 
         labelExpirationDate = new Label();
         labelExpirationDate.Text = "Срок действия:";
-        labelExpirationDate.Location = new Point(30, 300);
+        labelExpirationDate.Location = new Point(20, 295);
         labelExpirationDate.AutoSize = true;
         labelExpirationDate.Visible = false;
         StyleLabel(labelExpirationDate);
-        this.Controls.Add(labelExpirationDate);
+        panelDocument.Controls.Add(labelExpirationDate);
 
         dateTimePickerExpiration = new DateTimePicker();
-        dateTimePickerExpiration.Location = new Point(230, 300);
-        dateTimePickerExpiration.Size = new Size(200, 25);
-        dateTimePickerExpiration.Format = DateTimePickerFormat.Short;
+        dateTimePickerExpiration.Location = new Point(210, 292);
+        dateTimePickerExpiration.Size = new Size(170, 25);
+        dateTimePickerExpiration.Format = DateTimePickerFormat.Custom;
+        dateTimePickerExpiration.CustomFormat = "dd.MM.yyyy";
         dateTimePickerExpiration.Visible = false;
-        this.Controls.Add(dateTimePickerExpiration);
+        panelDocument.Controls.Add(dateTimePickerExpiration);
 
         checkBoxHasExpiration = new CheckBox();
         checkBoxHasExpiration.Text = "Есть срок действия";
-        checkBoxHasExpiration.Location = new Point(230, 330);
+        checkBoxHasExpiration.Location = new Point(210, 322);
         checkBoxHasExpiration.AutoSize = true;
         checkBoxHasExpiration.ForeColor = Color.FromArgb(44, 62, 80);
         checkBoxHasExpiration.CheckedChanged += CheckBoxHasExpiration_CheckedChanged;
-        this.Controls.Add(checkBoxHasExpiration);
+        panelDocument.Controls.Add(checkBoxHasExpiration);
 
         labelComment = new Label();
         labelComment.Text = "Комментарий:";
-        labelComment.Location = new Point(30, 365);
+        labelComment.Location = new Point(20, 355);
         labelComment.AutoSize = true;
         StyleLabel(labelComment);
-        this.Controls.Add(labelComment);
+        panelDocument.Controls.Add(labelComment);
 
         textBoxComment = new TextBox();
-        textBoxComment.Location = new Point(230, 365);
-        textBoxComment.Size = new Size(200, 60);
+        textBoxComment.Location = new Point(210, 352);
+        textBoxComment.Size = new Size(170, 55);
         textBoxComment.Multiline = true;
         StyleTextBox(textBoxComment);
-        this.Controls.Add(textBoxComment);
+        panelDocument.Controls.Add(textBoxComment);
 
         labelFile = new Label();
         labelFile.Text = "Файл:";
-        labelFile.Location = new Point(30, 435);
+        labelFile.Location = new Point(20, 420);
         labelFile.AutoSize = true;
         StyleLabel(labelFile);
-        this.Controls.Add(labelFile);
+        panelDocument.Controls.Add(labelFile);
 
         textBoxFilePath = new TextBox();
-        textBoxFilePath.Location = new Point(230, 435);
-        textBoxFilePath.Size = new Size(200, 25);
+        textBoxFilePath.Location = new Point(210, 417);
+        textBoxFilePath.Size = new Size(170, 25);
         textBoxFilePath.ReadOnly = true;
         StyleTextBox(textBoxFilePath);
-        this.Controls.Add(textBoxFilePath);
+        panelDocument.Controls.Add(textBoxFilePath);
 
-        buttonSelectFile = new Button();
-        buttonSelectFile.Text = "Выбрать файл";
-        buttonSelectFile.Location = new Point(230, 470);
-        buttonSelectFile.Size = new Size(200, 35);
-        StyleSmallButton(buttonSelectFile, Color.FromArgb(155, 89, 182));
-        buttonSelectFile.Click += ButtonSelectFile_Click;
-        this.Controls.Add(buttonSelectFile);
-
-        buttonOpenFile = new Button();
+        buttonOpenFile = new RoundedButton();
         buttonOpenFile.Text = "Открыть файл";
-        buttonOpenFile.Location = new Point(30, 470);
-        buttonOpenFile.Size = new Size(170, 35);
+        buttonOpenFile.Location = new Point(20, 455);
+        buttonOpenFile.Size = new Size(170, 38);
         StyleSmallButton(buttonOpenFile, Color.FromArgb(52, 73, 94));
         buttonOpenFile.Click += ButtonOpenFile_Click;
-        this.Controls.Add(buttonOpenFile);
+        panelDocument.Controls.Add(buttonOpenFile);
+
+        buttonSelectFile = new RoundedButton();
+        buttonSelectFile.Text = "Выбрать файл";
+        buttonSelectFile.Location = new Point(210, 455);
+        buttonSelectFile.Size = new Size(170, 38);
+        StyleSmallButton(buttonSelectFile, Color.FromArgb(155, 89, 182));
+        buttonSelectFile.Click += ButtonSelectFile_Click;
+        panelDocument.Controls.Add(buttonSelectFile);
 
         checkBoxImportant = new CheckBox();
         checkBoxImportant.Text = "Важный документ";
-        checkBoxImportant.Location = new Point(230, 510);
+        checkBoxImportant.Location = new Point(210, 505);
         checkBoxImportant.AutoSize = true;
         checkBoxImportant.ForeColor = Color.FromArgb(44, 62, 80);
         checkBoxImportant.CheckedChanged += CheckBoxImportant_CheckedChanged;
-        this.Controls.Add(checkBoxImportant);
+        panelDocument.Controls.Add(checkBoxImportant);
 
-        buttonAdd = new Button();
+        buttonAdd = new RoundedButton();
         buttonAdd.Text = "Добавить";
-        buttonAdd.Location = new Point(30, 555);
+        buttonAdd.Location = new Point(20, 540);
         buttonAdd.Size = new Size(170, 40);
         StyleButton(buttonAdd, Color.FromArgb(52, 152, 219));
         buttonAdd.Click += ButtonAdd_Click;
-        this.Controls.Add(buttonAdd);
+        panelDocument.Controls.Add(buttonAdd);
 
-        buttonClear = new Button();
+        buttonClear = new RoundedButton();
         buttonClear.Text = "Очистить";
-        buttonClear.Location = new Point(230, 555);
+        buttonClear.Location = new Point(210, 540);
         buttonClear.Size = new Size(170, 40);
         StyleButton(buttonClear, Color.FromArgb(149, 165, 166));
         buttonClear.Click += ButtonClear_Click;
-        this.Controls.Add(buttonClear);
+        panelDocument.Controls.Add(buttonClear);
 
-        buttonDeleteAll = new Button();
+        buttonDeleteAll = new RoundedButton();
         buttonDeleteAll.Text = "Удалить все";
-        buttonDeleteAll.Location = new Point(30, 605);
+        buttonDeleteAll.Location = new Point(20, 590);
         buttonDeleteAll.Size = new Size(170, 40);
         StyleButton(buttonDeleteAll, Color.FromArgb(192, 57, 43));
         buttonDeleteAll.Click += ButtonDeleteAll_Click;
-        this.Controls.Add(buttonDeleteAll);
+        panelDocument.Controls.Add(buttonDeleteAll);
 
-        buttonEdit = new Button();
+        buttonEdit = new RoundedButton();
         buttonEdit.Text = "Изменить";
-        buttonEdit.Location = new Point(230, 605);
+        buttonEdit.Location = new Point(210, 590);
         buttonEdit.Size = new Size(170, 40);
         StyleButton(buttonEdit, Color.FromArgb(46, 204, 113));
         buttonEdit.Click += ButtonEdit_Click;
-        this.Controls.Add(buttonEdit);
+        panelDocument.Controls.Add(buttonEdit);
 
         labelSearch = new Label();
         labelSearch.Text = "Поиск:";
-        labelSearch.Location = new Point(460, 55);
+        labelSearch.Location = new Point(10, 55);
         labelSearch.AutoSize = true;
         StyleLabel(labelSearch);
-        this.Controls.Add(labelSearch);
+        panelDocuments.Controls.Add(labelSearch);
 
         textBoxSearch = new TextBox();
-        textBoxSearch.Location = new Point(530, 52);
+        textBoxSearch.Location = new Point(80, 52);
         textBoxSearch.Size = new Size(190, 25);
         StyleTextBox(textBoxSearch);
         textBoxSearch.TextChanged += SearchControls_Changed;
-        this.Controls.Add(textBoxSearch);
+        panelDocuments.Controls.Add(textBoxSearch);
 
         labelFilter = new Label();
         labelFilter.Text = "Тип:";
-        labelFilter.Location = new Point(730, 55);
+        labelFilter.Location = new Point(285, 55);
         labelFilter.AutoSize = true;
         StyleLabel(labelFilter);
-        this.Controls.Add(labelFilter);
+        panelDocuments.Controls.Add(labelFilter);
 
         comboBoxFilter = new ComboBox();
-        comboBoxFilter.Location = new Point(780, 52);
-        comboBoxFilter.Size = new Size(160, 25);
+        comboBoxFilter.Location = new Point(335, 52);
+        comboBoxFilter.Size = new Size(185, 25);
         comboBoxFilter.DropDownStyle = ComboBoxStyle.DropDownList;
-        comboBoxFilter.Items.Add("Все");
-        comboBoxFilter.Items.Add("Паспорт");
-        comboBoxFilter.Items.Add("Свидетельство");
-        comboBoxFilter.Items.Add("Медицинский документ");
-        comboBoxFilter.Items.Add("Договор");
-        comboBoxFilter.Items.Add("Квитанция");
-        comboBoxFilter.SelectedIndex = 0;
         StyleComboBox(comboBoxFilter);
         comboBoxFilter.SelectedIndexChanged += SearchControls_Changed;
-        this.Controls.Add(comboBoxFilter);
+        comboBoxFilter.MouseHover += ComboBoxFilter_MouseHover;
+        panelDocuments.Controls.Add(comboBoxFilter);
 
         labelOwnerFilter = new Label();
         labelOwnerFilter.Text = "Владелец:";
-        labelOwnerFilter.Location = new Point(945, 55);
+        labelOwnerFilter.Location = new Point(525, 55);
         labelOwnerFilter.AutoSize = true;
         StyleLabel(labelOwnerFilter);
-        this.Controls.Add(labelOwnerFilter);
+        panelDocuments.Controls.Add(labelOwnerFilter);
 
         comboBoxOwnerFilter = new ComboBox();
-        comboBoxOwnerFilter.Location = new Point(1040, 52);
-        comboBoxOwnerFilter.Size = new Size(170, 25);
+        comboBoxOwnerFilter.Location = new Point(620, 52);
+        comboBoxOwnerFilter.Size = new Size(125, 25);
         comboBoxOwnerFilter.DropDownStyle = ComboBoxStyle.DropDownList;
         StyleComboBox(comboBoxOwnerFilter);
         comboBoxOwnerFilter.SelectedIndexChanged += SearchControls_Changed;
-        this.Controls.Add(comboBoxOwnerFilter);
+        panelDocuments.Controls.Add(comboBoxOwnerFilter);
 
         checkBoxOnlyImportant = new CheckBox();
         checkBoxOnlyImportant.Text = "Только важные";
-        checkBoxOnlyImportant.Location = new Point(460, 85);
+        checkBoxOnlyImportant.Location = new Point(20, 90);
         checkBoxOnlyImportant.AutoSize = true;
         checkBoxOnlyImportant.ForeColor = Color.FromArgb(44, 62, 80);
         checkBoxOnlyImportant.CheckedChanged += SearchControls_Changed;
-        this.Controls.Add(checkBoxOnlyImportant);
+        panelDocuments.Controls.Add(checkBoxOnlyImportant);
 
         dataGridViewDocuments = new DataGridView();
-        dataGridViewDocuments.Location = new Point(460, 120);
-        dataGridViewDocuments.Size = new Size(750, 270);
+        dataGridViewDocuments.Location = new Point(20, 130);
+        dataGridViewDocuments.Size = new Size(725, 420);
         dataGridViewDocuments.ReadOnly = true;
         dataGridViewDocuments.AllowUserToAddRows = false;
         dataGridViewDocuments.AllowUserToDeleteRows = false;
@@ -396,15 +479,15 @@ public partial class Form1 : Form
         dataGridViewDocuments.Columns.Add("Status", "Статус");
         dataGridViewDocuments.Columns.Add("ExpirationStatus", "Срок");
 
-        dataGridViewDocuments.Columns["Id"].Width = 50;
-        dataGridViewDocuments.Columns["Title"].Width = 230;
-        dataGridViewDocuments.Columns["Category"].Width = 160;
-        dataGridViewDocuments.Columns["Date"].Width = 100;
-        dataGridViewDocuments.Columns["Status"].Width = 100;
-        dataGridViewDocuments.Columns["ExpirationStatus"].Width = 110;
+        dataGridViewDocuments.Columns["Id"]!.Width = 50;
+        dataGridViewDocuments.Columns["Title"]!.Width = 220;
+        dataGridViewDocuments.Columns["Category"]!.Width = 150;
+        dataGridViewDocuments.Columns["Date"]!.Width = 100;
+        dataGridViewDocuments.Columns["Status"]!.Width = 90;
+        dataGridViewDocuments.Columns["ExpirationStatus"]!.Width = 110;
 
         StyleDataGridView();
-        this.Controls.Add(dataGridViewDocuments);
+        panelDocuments.Controls.Add(dataGridViewDocuments);
 
         documentContextMenu = new ContextMenuStrip();
 
@@ -427,37 +510,37 @@ public partial class Form1 : Form
 
         dataGridViewDocuments.ContextMenuStrip = documentContextMenu;
 
-        buttonStatistics = new Button();
+        buttonStatistics = new RoundedButton();
         buttonStatistics.Text = "Статистика";
-        buttonStatistics.Location = new Point(850, 430);
+        buttonStatistics.Location = new Point(385, 580);
         buttonStatistics.Size = new Size(170, 40);
         StyleButton(buttonStatistics, Color.FromArgb(41, 128, 185));
         buttonStatistics.Click += ButtonStatistics_Click;
-        this.Controls.Add(buttonStatistics);
+        panelDocuments.Controls.Add(buttonStatistics);
 
-        buttonResetSearch = new Button();
+        buttonResetSearch = new RoundedButton();
         buttonResetSearch.Text = "Сбросить";
-        buttonResetSearch.Location = new Point(1040, 430);
+        buttonResetSearch.Location = new Point(575, 580);
         buttonResetSearch.Size = new Size(170, 40);
         StyleButton(buttonResetSearch, Color.FromArgb(149, 165, 166));
         buttonResetSearch.Click += ButtonResetSearch_Click;
-        this.Controls.Add(buttonResetSearch);
+        panelDocuments.Controls.Add(buttonResetSearch);
 
         labelInfo = new TextBox();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 690);
-        labelInfo.Size = new Size(1180, 170);
+        labelInfo.Location = new Point(20, 48);
+        labelInfo.Size = new Size(1165, 105);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
-        labelInfo.BorderStyle = BorderStyle.FixedSingle;
+        labelInfo.BorderStyle = BorderStyle.None;
         labelInfo.Multiline = true;
         labelInfo.ReadOnly = true;
         labelInfo.ScrollBars = ScrollBars.Vertical;
         labelInfo.Font = new Font("Segoe UI", 10);
-        this.Controls.Add(labelInfo);
+        panelInfo.Controls.Add(labelInfo);
     }
 
-    private void StyleButton(Button button, Color backColor)
+    private void StyleButton(RoundedButton button, Color backColor)
     {
         button.BackColor = backColor;
         button.ForeColor = Color.White;
@@ -465,9 +548,10 @@ public partial class Form1 : Form
         button.FlatAppearance.BorderSize = 0;
         button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
         button.Cursor = Cursors.Hand;
+        button.CornerRadius = 10;
     }
 
-    private void StyleSmallButton(Button button, Color backColor)
+    private void StyleSmallButton(RoundedButton button, Color backColor)
     {
         button.BackColor = backColor;
         button.ForeColor = Color.White;
@@ -475,6 +559,7 @@ public partial class Form1 : Form
         button.FlatAppearance.BorderSize = 0;
         button.Font = new Font("Segoe UI", 9, FontStyle.Bold);
         button.Cursor = Cursors.Hand;
+        button.CornerRadius = 8;
     }
 
     private void StyleLabel(Label label)
@@ -496,6 +581,15 @@ public partial class Form1 : Form
         comboBox.BackColor = Color.White;
         comboBox.ForeColor = Color.FromArgb(44, 62, 80);
         comboBox.Font = new Font("Segoe UI", 9);
+    }
+
+    private Panel CreateShadowPanel(Point location, Size size)
+    {
+        Panel shadow = new Panel();
+        shadow.Location = new Point(location.X + 5, location.Y + 6);
+        shadow.Size = size;
+        shadow.BackColor = Color.FromArgb(225, 230, 235);
+        return shadow;
     }
 
     private void StyleDataGridView()
@@ -533,7 +627,7 @@ public partial class Form1 : Form
                 document.Id,
                 document.Title,
                 document.Category,
-                document.DocumentDate.ToShortDateString(),
+                document.DocumentDate.ToString("dd.MM.yyyy"),
                 importantText,
                 expirationStatus
             );
@@ -591,6 +685,41 @@ public partial class Form1 : Form
         comboBoxOwnerFilter.SelectedIndex = 0;
     }
 
+    private void RefreshDocumentTypesList()
+    {
+        List<string> defaultTypes = new List<string>
+        {
+            "Паспорт",
+            "Свидетельство",
+            "Медицинский документ",
+            "Договор",
+            "Квитанция"
+        };
+
+        List<string> allTypes = defaultTypes
+            .Concat(documentTypes)
+            .Distinct()
+            .ToList();
+
+        comboBoxType.Items.Clear();
+        comboBoxFilter.Items.Clear();
+
+        comboBoxFilter.Items.Add("Все");
+
+        foreach (string type in allTypes)
+        {
+            comboBoxType.Items.Add(type);
+            comboBoxFilter.Items.Add(type);
+        }
+
+        if (comboBoxType.Items.Count > 0)
+        {
+            comboBoxType.SelectedIndex = 0;
+        }
+
+        comboBoxFilter.SelectedIndex = 0;
+    }
+
     private void ApplyFilters()
     {
         string searchText = textBoxSearch.Text.Trim().ToLower();
@@ -613,7 +742,7 @@ public partial class Form1 : Form
     private string FormatDocumentInfo(FamilyDocument document)
     {
         string expirationDateText = document.ExpirationDate.HasValue
-            ? document.ExpirationDate.Value.ToShortDateString()
+            ? document.ExpirationDate.Value.ToString("dd.MM.yyyy")
             : "не указан";
 
         return
@@ -622,7 +751,7 @@ public partial class Form1 : Form
             "Категория: " + document.Category + Environment.NewLine +
             "Владелец: " + document.Owner + Environment.NewLine +
             "Номер документа: " + document.DocumentNumber + Environment.NewLine +
-            "Дата документа: " + document.DocumentDate.ToShortDateString() + Environment.NewLine +
+            "Дата документа: " + document.DocumentDate.ToString("dd.MM.yyyy") + Environment.NewLine +
             "Срок действия: " + expirationDateText + Environment.NewLine +
             "Важный документ: " + (document.IsImportant ? "да" : "нет") + Environment.NewLine +
             "Файл: " + document.FilePath + Environment.NewLine +
@@ -672,7 +801,7 @@ public partial class Form1 : Form
 
     private void DateTimePickerDocument_ValueChanged(object? sender, EventArgs e)
     {
-        labelInfo.Text = "Выбрана дата документа: " + dateTimePickerDocument.Value.ToShortDateString();
+        labelInfo.Text = "Выбрана дата документа: " + dateTimePickerDocument.Value.ToString("dd.MM.yyyy");
     }
 
     private void CheckBoxImportant_CheckedChanged(object? sender, EventArgs e)
@@ -737,7 +866,7 @@ public partial class Form1 : Form
             DocumentNumber = textBoxDocumentNumber.Text.Trim(),
             DocumentDate = dateTimePickerDocument.Value,
             ExpirationDate = checkBoxHasExpiration.Checked
-                ? dateTimePickerExpiration.Value
+                ? dateTimePickerExpiration.Value.Date
                 : null,
             FilePath = textBoxFilePath.Text.Trim(),
             Comment = textBoxComment.Text.Trim(),
@@ -807,7 +936,7 @@ public partial class Form1 : Form
         selectedDocument.DocumentNumber = textBoxDocumentNumber.Text.Trim();
         selectedDocument.DocumentDate = dateTimePickerDocument.Value;
         selectedDocument.ExpirationDate = checkBoxHasExpiration.Checked
-            ? dateTimePickerExpiration.Value
+            ? dateTimePickerExpiration.Value.Date
             : null;
         selectedDocument.FilePath = textBoxFilePath.Text.Trim();
         selectedDocument.Comment = textBoxComment.Text.Trim();
@@ -1224,6 +1353,65 @@ public partial class Form1 : Form
             "Документов, срок которых скоро истекает: " + expiringSoonDocuments;
     }
 
+    private void ButtonAddType_Click(object? sender, EventArgs e)
+    {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для добавления типа документа.";
+            return;
+        }
+
+        string typeName = Microsoft.VisualBasic.Interaction.InputBox(
+            "Введите новый тип документа:",
+            "Добавление типа документа",
+            ""
+        ).Trim();
+
+        if (string.IsNullOrWhiteSpace(typeName))
+        {
+            labelInfo.Text = "Тип документа не введен.";
+            return;
+        }
+
+        bool typeExists = comboBoxType.Items
+            .Cast<object>()
+            .Any(item => item.ToString() == typeName);
+
+        if (typeExists)
+        {
+            labelInfo.Text = "Такой тип документа уже есть в списке.";
+            return;
+        }
+
+        documentTypes.Add(typeName);
+        documentTypeStorageService.SaveTypes(documentTypes);
+
+        RefreshDocumentTypesList();
+
+        comboBoxType.SelectedItem = typeName;
+        labelInfo.Text = "Тип документа добавлен: " + typeName;
+    }
+
+    private void ComboBoxType_MouseHover(object? sender, EventArgs e)
+    {
+        string selectedType = comboBoxType.SelectedItem?.ToString() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(selectedType))
+        {
+            toolTip.SetToolTip(comboBoxType, selectedType);
+        }
+    }
+
+    private void ComboBoxFilter_MouseHover(object? sender, EventArgs e)
+    {
+        string selectedType = comboBoxFilter.SelectedItem?.ToString() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(selectedType))
+        {
+            toolTip.SetToolTip(comboBoxFilter, selectedType);
+        }
+    }
+
     private void ApplyUserRole()
     {
         if (userRole == "viewer")
@@ -1234,6 +1422,7 @@ public partial class Form1 : Form
             buttonDeleteAll.Enabled = false;
             buttonSelectFile.Enabled = false;
             buttonAddOwner.Enabled = false;
+            buttonAddType.Enabled = false;
 
             numericId.Enabled = false;
             textBoxTitle.ReadOnly = true;
