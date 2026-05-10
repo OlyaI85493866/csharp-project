@@ -684,8 +684,29 @@ public partial class Form1 : Form
 
         if (openFileDialog.ShowDialog() == DialogResult.OK)
         {
-            textBoxFilePath.Text = openFileDialog.FileName;
-            labelInfo.Text = "Выбран файл:" + Environment.NewLine + openFileDialog.FileName;
+            string copiedFilePath = CopyFileToStorage(openFileDialog.FileName);
+
+            textBoxFilePath.Text = copiedFilePath;
+            labelInfo.Text = "Файл выбран и скопирован в хранилище:" +
+                            Environment.NewLine +
+                            copiedFilePath;
         }
+    }
+    private string CopyFileToStorage(string sourceFilePath)
+    {
+        string storageFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DocumentsStorage");
+
+        if (!Directory.Exists(storageFolder))
+        {
+            Directory.CreateDirectory(storageFolder);
+        }
+
+        string originalFileName = Path.GetFileName(sourceFilePath);
+        string uniqueFileName = Guid.NewGuid().ToString() + "_" + originalFileName;
+        string destinationFilePath = Path.Combine(storageFolder, uniqueFileName);
+
+        File.Copy(sourceFilePath, destinationFilePath, true);
+
+        return destinationFilePath;
     }
 }
