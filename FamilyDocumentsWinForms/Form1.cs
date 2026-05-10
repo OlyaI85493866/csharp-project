@@ -12,6 +12,7 @@ namespace FamilyDocumentsWinForms;
 
 public partial class Form1 : Form
 {
+    private string userRole;
     private List<FamilyDocument> documents = new List<FamilyDocument>();
     private List<FamilyDocument> filteredDocuments = new List<FamilyDocument>();
     private List<string> owners = new List<string>();
@@ -61,8 +62,10 @@ public partial class Form1 : Form
     private DataGridView dataGridViewDocuments = null!;
     private ContextMenuStrip documentContextMenu = null!;
 
-    public Form1()
+    public Form1(string role)
     {
+        userRole = role;
+
         InitializeComponent();
         CreateFormElements();
 
@@ -74,6 +77,8 @@ public partial class Form1 : Form
         filteredDocuments = new List<FamilyDocument>(documents);
         RefreshDocumentsList();
         SetNextDocumentId();
+
+        ApplyUserRole();
     }
 
     private void CreateFormElements()
@@ -644,6 +649,11 @@ public partial class Form1 : Form
 
     private void ButtonAdd_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для добавления документа.";
+            return;
+        }
         if (string.IsNullOrWhiteSpace(textBoxTitle.Text))
         {
             labelInfo.Text = "Введите название документа.";
@@ -704,6 +714,11 @@ public partial class Form1 : Form
 
     private void ButtonEdit_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для изменения документа.";
+            return;
+        }
         if (dataGridViewDocuments.CurrentRow == null)
         {
             labelInfo.Text = "Выберите документ для изменения.";
@@ -743,6 +758,11 @@ public partial class Form1 : Form
 
     private void ButtonDelete_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для удаления документа.";
+            return;
+        }
         if (dataGridViewDocuments.CurrentRow == null)
         {
             labelInfo.Text = "Выберите документ для удаления.";
@@ -860,6 +880,11 @@ public partial class Form1 : Form
     }
      private void ButtonSelectFile_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для выбора файла.";
+            return;
+        }
         using OpenFileDialog openFileDialog = new OpenFileDialog();
 
         openFileDialog.Title = "Выберите файл документа";
@@ -894,6 +919,11 @@ public partial class Form1 : Form
     }
     private void ButtonDeleteAll_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для удаления всех документов.";
+            return;
+        }
         if (documents.Count == 0)
         {
             labelInfo.Text = "Список документов уже пуст.";
@@ -942,6 +972,11 @@ public partial class Form1 : Form
     }
     private void ButtonAddOwner_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для добавления владельца.";
+            return;
+        }
         string ownerName = Microsoft.VisualBasic.Interaction.InputBox(
             "Введите имя владельца:",
             "Добавление владельца",
@@ -969,6 +1004,11 @@ public partial class Form1 : Form
     }
     private void DeleteOwnerMenuItem_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для удаления владельца.";
+            return;
+        }
         string ownerName = comboBoxOwner.SelectedItem?.ToString() ?? "";
 
         if (string.IsNullOrWhiteSpace(ownerName))
@@ -1043,6 +1083,11 @@ public partial class Form1 : Form
 
     private void ClearFileMenuItem_Click(object? sender, EventArgs e)
     {
+        if (userRole == "viewer")
+        {
+            labelInfo.Text = "Недостаточно прав для изменения файла документа.";
+            return;
+        }
         if (dataGridViewDocuments.CurrentRow == null)
         {
             labelInfo.Text = "Выберите документ.";
@@ -1098,5 +1143,35 @@ public partial class Form1 : Form
             "Документов со сроком действия: " + documentsWithExpiration + Environment.NewLine +
             "Документов с истекшим сроком: " + expiredDocuments + Environment.NewLine +
             "Документов, срок которых скоро истекает: " + expiringSoonDocuments;
+    }
+    private void ApplyUserRole()
+    {
+        if (userRole == "viewer")
+        {
+            buttonAdd.Enabled = false;
+            buttonClear.Enabled = false;
+            buttonEdit.Enabled = false;
+            buttonDeleteAll.Enabled = false;
+            buttonSelectFile.Enabled = false;
+            buttonAddOwner.Enabled = false;
+
+            numericId.Enabled = false;
+            textBoxTitle.ReadOnly = true;
+            comboBoxType.Enabled = false;
+            comboBoxOwner.Enabled = false;
+            textBoxDocumentNumber.ReadOnly = true;
+            dateTimePickerDocument.Enabled = false;
+            checkBoxHasExpiration.Enabled = false;
+            dateTimePickerExpiration.Enabled = false;
+            textBoxFilePath.ReadOnly = true;
+            textBoxComment.ReadOnly = true;
+            checkBoxImportant.Enabled = false;
+
+            labelInfo.Text = "Вход выполнен в режиме просмотра. Изменение данных недоступно.";
+        }
+        else
+        {
+            labelInfo.Text = "Вход выполнен в режиме администратора.";
+        }
     }
 }

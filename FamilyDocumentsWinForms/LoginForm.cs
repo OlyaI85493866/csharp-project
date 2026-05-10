@@ -102,7 +102,15 @@ public class LoginForm : Form
 
         if (login == "admin" && password == "admin")
         {
-            Form1 mainForm = new Form1();
+            Form1 mainForm = new Form1("admin");
+
+            this.Hide();
+            mainForm.ShowDialog();
+            this.Close();
+        }
+        else if (login == "viewer" && password == "viewer")
+        {
+            Form1 mainForm = new Form1("viewer");
 
             this.Hide();
             mainForm.ShowDialog();
