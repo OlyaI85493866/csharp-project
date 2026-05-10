@@ -50,7 +50,6 @@ public partial class Form1 : Form
     private CheckBox checkBoxImportant = null!;
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
-    private Button buttonDelete = null!;
     private Button buttonEdit = null!;
     private Button buttonSelectFile = null!;
     private Button buttonOpenFile = null!;
@@ -58,6 +57,7 @@ public partial class Form1 : Form
     private Button buttonDeleteAll = null!;
     private Button buttonAddOwner = null!;
     private DataGridView dataGridViewDocuments = null!;
+    private ContextMenuStrip documentContextMenu = null!;
 
     public Form1()
     {
@@ -295,22 +295,9 @@ public partial class Form1 : Form
         buttonClear.Click += ButtonClear_Click;
         this.Controls.Add(buttonClear);
 
-        buttonDelete = new Button();
-        buttonDelete.Text = "Удалить";
-        buttonDelete.Location = new Point(30, 605);
-        buttonDelete.Size = new Size(170, 40);
-        buttonDelete.BackColor = Color.FromArgb(231, 76, 60);
-        buttonDelete.ForeColor = Color.White;
-        buttonDelete.FlatStyle = FlatStyle.Flat;
-        buttonDelete.FlatAppearance.BorderSize = 0;
-        buttonDelete.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-        buttonDelete.Cursor = Cursors.Hand;
-        buttonDelete.Click += ButtonDelete_Click;
-        this.Controls.Add(buttonDelete);
-
         buttonDeleteAll = new Button();
         buttonDeleteAll.Text = "Удалить все";
-        buttonDeleteAll.Location = new Point(30, 655);
+        buttonDeleteAll.Location = new Point(30, 605);
         buttonDeleteAll.Size = new Size(170, 40);
         buttonDeleteAll.BackColor = Color.FromArgb(192, 57, 43);
         buttonDeleteAll.ForeColor = Color.White;
@@ -390,6 +377,7 @@ public partial class Form1 : Form
         dataGridViewDocuments.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
         dataGridViewDocuments.RowHeadersVisible = false;
         dataGridViewDocuments.SelectionChanged += DataGridViewDocuments_SelectionChanged;
+        dataGridViewDocuments.CellMouseDown += DataGridViewDocuments_CellMouseDown;
 
         dataGridViewDocuments.Columns.Add("Id", "ID");
         dataGridViewDocuments.Columns.Add("Title", "Название");
@@ -403,6 +391,23 @@ public partial class Form1 : Form
         dataGridViewDocuments.Columns["Date"].Width = 130;
         dataGridViewDocuments.Columns["Status"].Width = 130;
         this.Controls.Add(dataGridViewDocuments);
+        
+        documentContextMenu = new ContextMenuStrip();
+        ToolStripMenuItem deleteDocumentMenuItem = new ToolStripMenuItem("Удалить документ");
+        deleteDocumentMenuItem.Click += DeleteDocumentMenuItem_Click;
+        ToolStripMenuItem openFileMenuItem = new ToolStripMenuItem("Открыть файл");
+        openFileMenuItem.Click += OpenFileMenuItem_Click;
+        ToolStripMenuItem copyFilePathMenuItem = new ToolStripMenuItem("Скопировать путь к файлу");
+        copyFilePathMenuItem.Click += CopyFilePathMenuItem_Click;
+        ToolStripMenuItem clearFileMenuItem = new ToolStripMenuItem("Убрать прикрепленный файл");
+        clearFileMenuItem.Click += ClearFileMenuItem_Click;
+
+        documentContextMenu.Items.Add(deleteDocumentMenuItem);
+        documentContextMenu.Items.Add(openFileMenuItem);
+        documentContextMenu.Items.Add(copyFilePathMenuItem);
+        documentContextMenu.Items.Add(clearFileMenuItem);
+
+        dataGridViewDocuments.ContextMenuStrip = documentContextMenu;
 
         buttonResetSearch = new Button();
         buttonResetSearch.Text = "Сбросить";
@@ -902,5 +907,90 @@ public partial class Form1 : Form
         ApplyFilters();
 
         labelInfo.Text = "Владелец удален из списка: " + ownerName;
+    }
+
+    private void DataGridViewDocuments_CellMouseDown(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Right && e.RowIndex >= 0)
+        {
+            dataGridViewDocuments.ClearSelection();
+            dataGridViewDocuments.Rows[e.RowIndex].Selected = true;
+            dataGridViewDocuments.CurrentCell = dataGridViewDocuments.Rows[e.RowIndex].Cells[0];
+        }
+    }
+
+    private void DeleteDocumentMenuItem_Click(object? sender, EventArgs e)
+    {
+        ButtonDelete_Click(sender, e);
+    }
+
+    private void OpenFileMenuItem_Click(object? sender, EventArgs e)
+    {
+        ButtonOpenFile_Click(sender, e);
+    }
+
+    private void CopyFilePathMenuItem_Click(object? sender, EventArgs e)
+    {
+        if (dataGridViewDocuments.CurrentRow == null)
+        {
+            labelInfo.Text = "Выберите документ.";
+            return;
+        }
+
+        if (dataGridViewDocuments.CurrentRow.Tag is not FamilyDocument selectedDocument)
+        {
+            labelInfo.Text = "Документ не найден.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedDocument.FilePath))
+        {
+            labelInfo.Text = "У выбранного документа нет прикрепленного файла.";
+            return;
+        }
+
+        Clipboard.SetText(selectedDocument.FilePath);
+        labelInfo.Text = "Путь к файлу скопирован:" + Environment.NewLine + selectedDocument.FilePath;
+    }
+
+    private void ClearFileMenuItem_Click(object? sender, EventArgs e)
+    {
+        if (dataGridViewDocuments.CurrentRow == null)
+        {
+            labelInfo.Text = "Выберите документ.";
+            return;
+        }
+
+        if (dataGridViewDocuments.CurrentRow.Tag is not FamilyDocument selectedDocument)
+        {
+            labelInfo.Text = "Документ не найден.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedDocument.FilePath))
+        {
+            labelInfo.Text = "У выбранного документа нет прикрепленного файла.";
+            return;
+        }
+
+        DialogResult result = MessageBox.Show(
+            "Убрать прикрепленный файл у выбранного документа?",
+            "Подтверждение",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question
+        );
+
+        if (result != DialogResult.Yes)
+        {
+            return;
+        }
+
+        selectedDocument.FilePath = "";
+        textBoxFilePath.Clear();
+
+        storageService.SaveDocuments(documents);
+        ApplyFilters();
+
+        labelInfo.Text = "Прикрепленный файл убран у документа:" + Environment.NewLine + selectedDocument.Title;
     }
 }
