@@ -1,22 +1,28 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using FamilyDocumentsWinForms.Controls;
 
 namespace FamilyDocumentsWinForms;
 
-public class LoginForm : Form
+public partial class LoginForm : Form
 {
-    private Panel panelCard = null!;
-    private Label labelHeader = null!;
+    private RoundedPanel panelLogin = null!;
+    private Panel shadowLogin = null!;
+
+    private Label labelTitle = null!;
     private Label labelSubtitle = null!;
     private Label labelLogin = null!;
     private Label labelPassword = null!;
+    private Label labelInfo = null!;
+
     private TextBox textBoxLogin = null!;
     private TextBox textBoxPassword = null!;
-    private Button buttonLogin = null!;
-    private Button buttonExit = null!;
-    private Label labelMessage = null!;
     private TextBox textBoxHint = null!;
+
+    private RoundedButton buttonLogin = null!;
+    private RoundedButton buttonExit = null!;
+
     public LoginForm()
     {
         CreateFormElements();
@@ -25,106 +31,125 @@ public class LoginForm : Form
     private void CreateFormElements()
     {
         this.Text = "Вход в систему";
-        this.Size = new Size(520, 480);
+        this.Size = new Size(520, 420);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
 
-        panelCard = new Panel();
-        panelCard.Location = new Point(45, 35);
-        panelCard.Size = new Size(410, 360);
-        panelCard.BackColor = Color.White;
-        panelCard.BorderStyle = BorderStyle.FixedSingle;
-        this.Controls.Add(panelCard);
+        shadowLogin = CreateShadowPanel(new Point(45, 45), new Size(415, 305));
+        this.Controls.Add(shadowLogin);
 
-        labelHeader = new Label();
-        labelHeader.Text = "Семейная документация";
-        labelHeader.Location = new Point(12, 20);
-        labelHeader.AutoSize = true;
-        labelHeader.Font = new Font("Segoe UI", 15, FontStyle.Bold);
-        labelHeader.ForeColor = Color.FromArgb(44, 62, 80);
-        panelCard.Controls.Add(labelHeader);
+        panelLogin = new RoundedPanel();
+        panelLogin.Location = new Point(40, 40);
+        panelLogin.Size = new Size(415, 305);
+        panelLogin.CornerRadius = 18;
+        panelLogin.BorderColor = Color.FromArgb(225, 230, 235);
+        this.Controls.Add(panelLogin);
+        panelLogin.BringToFront();
+
+        labelTitle = new Label();
+        labelTitle.Text = "Вход в систему";
+        labelTitle.Location = new Point(75, 15);
+        labelTitle.AutoSize = true;
+        labelTitle.Font = new Font("Segoe UI", 16, FontStyle.Bold);
+        labelTitle.ForeColor = Color.FromArgb(44, 62, 80);
+        panelLogin.Controls.Add(labelTitle);
 
         labelSubtitle = new Label();
-        labelSubtitle.Text = "Вход в автоматизированную систему";
-        labelSubtitle.Location = new Point(45, 65);
+        labelSubtitle.Text = "Введите логин и пароль для продолжения";
+        labelSubtitle.Location = new Point(32, 62);
         labelSubtitle.AutoSize = true;
         labelSubtitle.Font = new Font("Segoe UI", 9);
-        labelSubtitle.ForeColor = Color.FromArgb(127, 140, 141);
-        panelCard.Controls.Add(labelSubtitle);
+        labelSubtitle.ForeColor = Color.FromArgb(100, 110, 120);
+        panelLogin.Controls.Add(labelSubtitle);
 
         labelLogin = new Label();
         labelLogin.Text = "Логин:";
-        labelLogin.Location = new Point(45, 110);
+        labelLogin.Location = new Point(35, 105);
         labelLogin.AutoSize = true;
-        labelLogin.ForeColor = Color.FromArgb(44, 62, 80);
-        panelCard.Controls.Add(labelLogin);
+        StyleLabel(labelLogin);
+        panelLogin.Controls.Add(labelLogin);
 
         textBoxLogin = new TextBox();
-        textBoxLogin.Location = new Point(145, 107);
-        textBoxLogin.Size = new Size(210, 25);
-        textBoxLogin.BorderStyle = BorderStyle.FixedSingle;
-        textBoxLogin.Font = new Font("Segoe UI", 10);
-        panelCard.Controls.Add(textBoxLogin);
+        textBoxLogin.Location = new Point(135, 102);
+        textBoxLogin.Size = new Size(235, 25);
+        StyleTextBox(textBoxLogin);
+        textBoxLogin.KeyDown += TextBox_KeyDown;
+        panelLogin.Controls.Add(textBoxLogin);
 
         labelPassword = new Label();
         labelPassword.Text = "Пароль:";
-        labelPassword.Location = new Point(45, 150);
+        labelPassword.Location = new Point(35, 145);
         labelPassword.AutoSize = true;
-        labelPassword.ForeColor = Color.FromArgb(44, 62, 80);
-        panelCard.Controls.Add(labelPassword);
+        StyleLabel(labelPassword);
+        panelLogin.Controls.Add(labelPassword);
 
         textBoxPassword = new TextBox();
-        textBoxPassword.Location = new Point(145, 147);
-        textBoxPassword.Size = new Size(210, 25);
-        textBoxPassword.BorderStyle = BorderStyle.FixedSingle;
-        textBoxPassword.Font = new Font("Segoe UI", 10);
-        textBoxPassword.UseSystemPasswordChar = true;
-        textBoxPassword.KeyDown += TextBoxPassword_KeyDown;
-        panelCard.Controls.Add(textBoxPassword);
-
-        buttonLogin = new Button();
-        buttonLogin.Text = "Войти";
-        buttonLogin.Location = new Point(45, 205);
-        buttonLogin.Size = new Size(145, 40);
-        StyleButton(buttonLogin, Color.FromArgb(52, 152, 219));
-        buttonLogin.Click += ButtonLogin_Click;
-        panelCard.Controls.Add(buttonLogin);
-
-        buttonExit = new Button();
-        buttonExit.Text = "Выход";
-        buttonExit.Location = new Point(210, 205);
-        buttonExit.Size = new Size(145, 40);
-        StyleButton(buttonExit, Color.FromArgb(149, 165, 166));
-        buttonExit.Click += ButtonExit_Click;
-        panelCard.Controls.Add(buttonExit);
-
-        labelMessage = new Label();
-        labelMessage.Text = "Введите логин и пароль";
-        labelMessage.Location = new Point(45, 255);
-        labelMessage.Size = new Size(310, 25);
-        labelMessage.ForeColor = Color.FromArgb(44, 62, 80);
-        panelCard.Controls.Add(labelMessage);
+        textBoxPassword.Location = new Point(135, 142);
+        textBoxPassword.Size = new Size(235, 25);
+        textBoxPassword.PasswordChar = '*';
+        StyleTextBox(textBoxPassword);
+        textBoxPassword.KeyDown += TextBox_KeyDown;
+        panelLogin.Controls.Add(textBoxPassword);
 
         textBoxHint = new TextBox();
-        textBoxHint.Text =
-            "admin/admin — полный доступ" + Environment.NewLine +
-            "viewer/viewer — просмотр";
-        textBoxHint.Location = new Point(45, 280);
-        textBoxHint.Size = new Size(330, 45);
-        textBoxHint.ForeColor = Color.FromArgb(127, 140, 141);
-        textBoxHint.BackColor = Color.White;
-        textBoxHint.BorderStyle = BorderStyle.None;
-        textBoxHint.Font = new Font("Segoe UI", 8);
-        textBoxHint.ReadOnly = true;
+        textBoxHint.Location = new Point(35, 185);
+        textBoxHint.Size = new Size(335, 48);
         textBoxHint.Multiline = true;
-        textBoxHint.TabStop = false;
-        panelCard.Controls.Add(textBoxHint);
+        textBoxHint.ReadOnly = true;
+        textBoxHint.BorderStyle = BorderStyle.None;
+        textBoxHint.BackColor = Color.White;
+        textBoxHint.ForeColor = Color.FromArgb(100, 110, 120);
+        textBoxHint.Font = new Font("Segoe UI", 9);
+        textBoxHint.Text =
+            "admin/admin — администратор" + Environment.NewLine +
+            "viewer/viewer — просмотр";
+        panelLogin.Controls.Add(textBoxHint);
+
+        buttonLogin = new RoundedButton();
+        buttonLogin.Text = "Войти";
+        buttonLogin.Location = new Point(35, 245);
+        buttonLogin.Size = new Size(160, 38);
+        StyleButton(buttonLogin, Color.FromArgb(52, 152, 219));
+        buttonLogin.Click += ButtonLogin_Click;
+        panelLogin.Controls.Add(buttonLogin);
+
+        buttonExit = new RoundedButton();
+        buttonExit.Text = "Выход";
+        buttonExit.Location = new Point(210, 245);
+        buttonExit.Size = new Size(160, 38);
+        StyleButton(buttonExit, Color.FromArgb(149, 165, 166));
+        buttonExit.Click += ButtonExit_Click;
+        panelLogin.Controls.Add(buttonExit);
+
+        labelInfo = new Label();
+        labelInfo.Text = "";
+        labelInfo.Location = new Point(40, 360);
+        labelInfo.Size = new Size(415, 25);
+        labelInfo.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        labelInfo.ForeColor = Color.FromArgb(192, 57, 43);
+        labelInfo.TextAlign = ContentAlignment.MiddleCenter;
+        this.Controls.Add(labelInfo);
+
+        textBoxLogin.Focus();
     }
 
-    private void StyleButton(Button button, Color backColor)
+    private Panel CreateShadowPanel(Point location, Size size)
+    {
+        RoundedPanel shadow = new RoundedPanel();
+        shadow.Location = new Point(location.X + 5, location.Y + 6);
+        shadow.Size = size;
+        shadow.BackColor = Color.FromArgb(210, 218, 225);
+        shadow.BorderColor = Color.FromArgb(210, 218, 225);
+        shadow.CornerRadius = 18;
+        shadow.Enabled = false;
+
+        return shadow;
+    }
+
+    private void StyleButton(RoundedButton button, Color backColor)
     {
         button.BackColor = backColor;
         button.ForeColor = Color.White;
@@ -132,53 +157,68 @@ public class LoginForm : Form
         button.FlatAppearance.BorderSize = 0;
         button.Font = new Font("Segoe UI", 10, FontStyle.Bold);
         button.Cursor = Cursors.Hand;
+        button.CornerRadius = 10;
     }
 
-    private void ButtonLogin_Click(object? sender, EventArgs e)
+    private void StyleLabel(Label label)
     {
-        TryLogin();
+        label.ForeColor = Color.FromArgb(44, 62, 80);
+        label.Font = new Font("Segoe UI", 9, FontStyle.Regular);
     }
 
-    private void TextBoxPassword_KeyDown(object? sender, KeyEventArgs e)
+    private void StyleTextBox(TextBox textBox)
+    {
+        textBox.BackColor = Color.White;
+        textBox.ForeColor = Color.FromArgb(44, 62, 80);
+        textBox.Font = new Font("Segoe UI", 9);
+        textBox.BorderStyle = BorderStyle.FixedSingle;
+    }
+
+    private void TextBox_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter)
         {
-            TryLogin();
+            ButtonLogin_Click(sender, e);
         }
     }
 
-    private void TryLogin()
+    private void ButtonLogin_Click(object? sender, EventArgs e)
     {
         string login = textBoxLogin.Text.Trim();
         string password = textBoxPassword.Text.Trim();
 
         if (login == "admin" && password == "admin")
         {
-            Form1 mainForm = new Form1("admin");
+            OpenMainForm("admin");
+            return;
+        }
 
-            this.Hide();
-            mainForm.ShowDialog();
-            this.Close();
-        }
-        else if (login == "viewer" && password == "viewer")
+        if (login == "viewer" && password == "viewer")
         {
-            Form1 mainForm = new Form1("viewer");
+            OpenMainForm("viewer");
+            return;
+        }
 
-            this.Hide();
-            mainForm.ShowDialog();
-            this.Close();
-        }
-        else
+        labelInfo.Text = "Неверный логин или пароль.";
+        textBoxPassword.Clear();
+        textBoxPassword.Focus();
+    }
+
+    private void OpenMainForm(string role)
+    {
+        Form1 mainForm = new Form1(role);
+
+        mainForm.FormClosed += (sender, e) =>
         {
-            labelMessage.ForeColor = Color.FromArgb(231, 76, 60);
-            labelMessage.Text = "Неверный логин или пароль.";
-            textBoxPassword.Clear();
-            textBoxPassword.Focus();
-        }
+            this.Close();
+        };
+
+        this.Hide();
+        mainForm.Show();
     }
 
     private void ButtonExit_Click(object? sender, EventArgs e)
     {
-        this.Close();
+        Application.Exit();
     }
 }

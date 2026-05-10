@@ -19,6 +19,7 @@ public partial class Form1 : Form
     private List<FamilyDocument> filteredDocuments = new List<FamilyDocument>();
     private List<string> owners = new List<string>();
     private List<string> documentTypes = new List<string>();
+    private bool isUpdatingControls = false;
 
     private DocumentStorageService storageService = new DocumentStorageService();
     private OwnerStorageService ownerStorageService = new OwnerStorageService();
@@ -107,7 +108,7 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1250, 980);
+        this.Size = new Size(1260, 980);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -196,7 +197,7 @@ public partial class Form1 : Form
         numericId.Location = new Point(210, 52);
         numericId.Size = new Size(170, 25);
         numericId.Minimum = 1;
-        numericId.Maximum = 10000;
+        numericId.Maximum = 1000000;
         numericId.BackColor = Color.White;
         numericId.ForeColor = Color.FromArgb(44, 62, 80);
         numericId.ValueChanged += NumericId_ValueChanged;
@@ -585,10 +586,14 @@ public partial class Form1 : Form
 
     private Panel CreateShadowPanel(Point location, Size size)
     {
-        Panel shadow = new Panel();
+        RoundedPanel shadow = new RoundedPanel();
         shadow.Location = new Point(location.X + 5, location.Y + 6);
         shadow.Size = size;
-        shadow.BackColor = Color.FromArgb(225, 230, 235);
+        shadow.BackColor = Color.FromArgb(210, 218, 225);
+        shadow.BorderColor = Color.FromArgb(210, 218, 225);
+        shadow.CornerRadius = 18;
+        shadow.Enabled = false;
+
         return shadow;
     }
 
@@ -661,11 +666,21 @@ public partial class Form1 : Form
 
     private void SetNextDocumentId()
     {
-        numericId.Value = GetNextDocumentId();
+        int nextId = GetNextDocumentId();
+
+        if (nextId > numericId.Maximum)
+        {
+            numericId.Maximum = nextId;
+        }
+
+        numericId.Value = nextId;
     }
 
     private void RefreshOwnersList()
     {
+        string selectedOwner = comboBoxOwner.SelectedItem?.ToString() ?? "";
+        string selectedOwnerFilter = comboBoxOwnerFilter.SelectedItem?.ToString() ?? "Все";
+
         comboBoxOwner.Items.Clear();
         comboBoxOwnerFilter.Items.Clear();
 
@@ -677,12 +692,23 @@ public partial class Form1 : Form
             comboBoxOwnerFilter.Items.Add(owner);
         }
 
-        if (comboBoxOwner.Items.Count > 0)
+        if (!string.IsNullOrWhiteSpace(selectedOwner) && comboBoxOwner.Items.Contains(selectedOwner))
+        {
+            comboBoxOwner.SelectedItem = selectedOwner;
+        }
+        else if (comboBoxOwner.Items.Count > 0)
         {
             comboBoxOwner.SelectedIndex = 0;
         }
 
-        comboBoxOwnerFilter.SelectedIndex = 0;
+        if (!string.IsNullOrWhiteSpace(selectedOwnerFilter) && comboBoxOwnerFilter.Items.Contains(selectedOwnerFilter))
+        {
+            comboBoxOwnerFilter.SelectedItem = selectedOwnerFilter;
+        }
+        else
+        {
+            comboBoxOwnerFilter.SelectedIndex = 0;
+        }
     }
 
     private void RefreshDocumentTypesList()
@@ -1015,6 +1041,10 @@ public partial class Form1 : Form
 
     private void DataGridViewDocuments_SelectionChanged(object? sender, EventArgs e)
     {
+        if (isUpdatingControls)
+        {
+            return;
+        }
         if (dataGridViewDocuments.CurrentRow == null)
         {
             return;
@@ -1202,9 +1232,19 @@ public partial class Form1 : Form
 
         owners.Add(ownerName);
         ownerStorageService.SaveOwners(owners);
-        RefreshOwnersList();
 
+        isUpdatingControls = true;
+
+        RefreshOwnersList();
         comboBoxOwner.SelectedItem = ownerName;
+
+        if (dataGridViewDocuments.CurrentRow != null)
+        {
+            dataGridViewDocuments.ClearSelection();
+        }
+
+        isUpdatingControls = false;
+
         labelInfo.Text = "Владелец добавлен: " + ownerName;
     }
 
