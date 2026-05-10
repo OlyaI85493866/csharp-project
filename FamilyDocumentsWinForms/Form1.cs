@@ -48,6 +48,7 @@ public partial class Form1 : Form
     private ComboBox comboBoxFilter = null!;
     private ComboBox comboBoxOwnerFilter = null!;
     private CheckBox checkBoxImportant = null!;
+    private CheckBox checkBoxOnlyImportant = null!;
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
     private Button buttonEdit = null!;
@@ -71,6 +72,7 @@ public partial class Form1 : Form
 
         filteredDocuments = new List<FamilyDocument>(documents);
         RefreshDocumentsList();
+        SetNextDocumentId();
     }
 
     private void CreateFormElements()
@@ -366,8 +368,15 @@ public partial class Form1 : Form
         comboBoxOwnerFilter.SelectedIndexChanged += SearchControls_Changed;
         this.Controls.Add(comboBoxOwnerFilter);
 
+        checkBoxOnlyImportant = new CheckBox();
+        checkBoxOnlyImportant.Text = "Только важные";
+        checkBoxOnlyImportant.Location = new Point(460, 85);
+        checkBoxOnlyImportant.AutoSize = true;
+        checkBoxOnlyImportant.CheckedChanged += SearchControls_Changed;
+        this.Controls.Add(checkBoxOnlyImportant);
+
         dataGridViewDocuments = new DataGridView();
-        dataGridViewDocuments.Location = new Point(460, 100);
+        dataGridViewDocuments.Location = new Point(460, 120);
         dataGridViewDocuments.Size = new Size(750, 270);
         dataGridViewDocuments.ReadOnly = true;
         dataGridViewDocuments.AllowUserToAddRows = false;
@@ -384,12 +393,14 @@ public partial class Form1 : Form
         dataGridViewDocuments.Columns.Add("Category", "Тип");
         dataGridViewDocuments.Columns.Add("Date", "Дата");
         dataGridViewDocuments.Columns.Add("Status", "Статус");
+        dataGridViewDocuments.Columns.Add("ExpirationStatus", "Срок");
 
         dataGridViewDocuments.Columns["Id"].Width = 50;
-        dataGridViewDocuments.Columns["Title"].Width = 260;
-        dataGridViewDocuments.Columns["Category"].Width = 180;
-        dataGridViewDocuments.Columns["Date"].Width = 130;
-        dataGridViewDocuments.Columns["Status"].Width = 130;
+        dataGridViewDocuments.Columns["Title"].Width = 230;
+        dataGridViewDocuments.Columns["Category"].Width = 160;
+        dataGridViewDocuments.Columns["Date"].Width = 100;
+        dataGridViewDocuments.Columns["Status"].Width = 100;
+        dataGridViewDocuments.Columns["ExpirationStatus"].Width = 110;
         this.Controls.Add(dataGridViewDocuments);
         
         documentContextMenu = new ContextMenuStrip();
@@ -443,17 +454,46 @@ public partial class Form1 : Form
         foreach (FamilyDocument document in filteredDocuments)
         {
             string importantText = document.IsImportant ? "важный" : "обычный";
+            string expirationStatus = GetExpirationStatus(document);
 
             int rowIndex = dataGridViewDocuments.Rows.Add(
                 document.Id,
                 document.Title,
                 document.Category,
                 document.DocumentDate.ToShortDateString(),
-                importantText
+                importantText,
+                expirationStatus
             );
 
             dataGridViewDocuments.Rows[rowIndex].Tag = document;
+
+            if (expirationStatus == "Истек")
+            {
+                dataGridViewDocuments.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(255, 220, 220);
+            }
+            else if (expirationStatus == "Скоро истекает")
+            {
+                dataGridViewDocuments.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
+            }
+            else if (document.IsImportant)
+            {
+                dataGridViewDocuments.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(220, 240, 255);
+            }
         }
+    }
+
+    private int GetNextDocumentId()
+    {
+        if (documents.Count == 0)
+        {
+            return 1;
+        }
+
+        return documents.Max(document => document.Id) + 1;
+    }
+    private void SetNextDocumentId()
+    {
+        numericId.Value = GetNextDocumentId();
     }
 
     private void RefreshOwnersList()
@@ -482,12 +522,14 @@ public partial class Form1 : Form
         string searchText = textBoxSearch.Text.Trim().ToLower();
         string selectedCategory = comboBoxFilter.SelectedItem?.ToString() ?? "Все";
         string selectedOwner = comboBoxOwnerFilter.SelectedItem?.ToString() ?? "Все";
+        bool onlyImportant = checkBoxOnlyImportant.Checked;
 
         filteredDocuments = documents
             .Where(document =>
                 document.Title.ToLower().Contains(searchText) &&
                 (selectedCategory == "Все" || document.Category == selectedCategory) &&
-                (selectedOwner == "Все" || document.Owner == selectedOwner)
+                (selectedOwner == "Все" || document.Owner == selectedOwner) &&
+                (!onlyImportant || document.IsImportant)
             )
             .ToList();
 
@@ -512,7 +554,30 @@ public partial class Form1 : Form
             "Файл: " + document.FilePath + Environment.NewLine +
             "Комментарий: " + document.Comment;
     }
+    private string GetExpirationStatus(FamilyDocument document)
+    {
+        if (!document.ExpirationDate.HasValue)
+        {
+            return "Не указан";
+        }
 
+        DateTime today = DateTime.Today;
+        DateTime expirationDate = document.ExpirationDate.Value.Date;
+
+        if (expirationDate < today)
+        {
+            return "Истек";
+        }
+
+        int daysLeft = (expirationDate - today).Days;
+
+        if (daysLeft <= 30)
+        {
+            return "Скоро истекает";
+        }
+
+        return "Действует";
+    }
     private void NumericId_ValueChanged(object? sender, EventArgs e)
     {
         labelInfo.Text = "Выбран Id документа: " + numericId.Value;
@@ -574,6 +639,12 @@ public partial class Form1 : Form
         int id = (int)numericId.Value;
         string title = textBoxTitle.Text.Trim();
         string type = comboBoxType.SelectedItem?.ToString() ?? "Не указано";
+        bool idExists = documents.Any(document => document.Id == id);
+        if (idExists)
+        {
+            labelInfo.Text = "Документ с таким ID уже существует. Выберите другой ID.";
+            return;
+        }
 
         FamilyDocument document = new FamilyDocument(id, title)
         {
@@ -592,6 +663,7 @@ public partial class Form1 : Form
         documents.Add(document);
         storageService.SaveDocuments(documents);
         ApplyFilters();
+        SetNextDocumentId();
 
         labelInfo.Text = "Документ добавлен и сохранен:" + Environment.NewLine + FormatDocumentInfo(document);
     }
@@ -684,6 +756,7 @@ public partial class Form1 : Form
         documents.Remove(selectedDocument);
         storageService.SaveDocuments(documents);
         ApplyFilters();
+        SetNextDocumentId();
 
         labelInfo.Text = "Документ удален:" + Environment.NewLine + FormatDocumentInfo(selectedDocument);
     }
@@ -768,6 +841,7 @@ public partial class Form1 : Form
         textBoxSearch.Clear();
         comboBoxFilter.SelectedIndex = 0;
         comboBoxOwnerFilter.SelectedIndex = 0;
+        checkBoxOnlyImportant.Checked = false;
         ApplyFilters();
     }
      private void ButtonSelectFile_Click(object? sender, EventArgs e)
