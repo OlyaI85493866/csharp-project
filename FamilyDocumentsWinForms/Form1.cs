@@ -48,6 +48,7 @@ public partial class Form1 : Form
     private Button buttonSelectFile = null!;
     private Button buttonOpenFile = null!;
     private Button buttonResetSearch = null!;
+    private Button buttonDeleteAll = null!;
     private DataGridView dataGridViewDocuments = null!;
 
     public Form1()
@@ -63,7 +64,7 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1100, 930);
+        this.Size = new Size(1100, 960);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -275,6 +276,19 @@ public partial class Form1 : Form
         buttonDelete.Click += ButtonDelete_Click;
         this.Controls.Add(buttonDelete);
 
+        buttonDeleteAll = new Button();
+        buttonDeleteAll.Text = "Удалить все";
+        buttonDeleteAll.Location = new Point(30, 655);
+        buttonDeleteAll.Size = new Size(170, 40);
+        buttonDeleteAll.BackColor = Color.FromArgb(192, 57, 43);
+        buttonDeleteAll.ForeColor = Color.White;
+        buttonDeleteAll.FlatStyle = FlatStyle.Flat;
+        buttonDeleteAll.FlatAppearance.BorderSize = 0;
+        buttonDeleteAll.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        buttonDeleteAll.Cursor = Cursors.Hand;
+        buttonDeleteAll.Click += ButtonDeleteAll_Click;
+        this.Controls.Add(buttonDeleteAll);
+
         buttonEdit = new Button();
         buttonEdit.Text = "Изменить";
         buttonEdit.Location = new Point(230, 605);
@@ -360,7 +374,7 @@ public partial class Form1 : Form
 
         labelInfo = new TextBox();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 680);
+        labelInfo.Location = new Point(30, 705);
         labelInfo.Size = new Size(1020, 170);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
@@ -708,5 +722,48 @@ public partial class Form1 : Form
         File.Copy(sourceFilePath, destinationFilePath, true);
 
         return destinationFilePath;
+    }
+    private void ButtonDeleteAll_Click(object? sender, EventArgs e)
+    {
+        if (documents.Count == 0)
+        {
+            labelInfo.Text = "Список документов уже пуст.";
+            return;
+        }
+
+        DialogResult result = MessageBox.Show(
+            "Вы действительно хотите удалить все документы?",
+            "Подтверждение удаления",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (result != DialogResult.Yes)
+        {
+            return;
+        }
+
+        documents.Clear();
+        filteredDocuments.Clear();
+
+        storageService.SaveDocuments(documents);
+        RefreshDocumentsList();
+
+        textBoxSearch.Clear();
+        comboBoxFilter.SelectedIndex = 0;
+
+        numericId.Value = 1;
+        textBoxTitle.Clear();
+        comboBoxType.SelectedIndex = 0;
+        textBoxOwner.Clear();
+        textBoxDocumentNumber.Clear();
+        dateTimePickerDocument.Value = DateTime.Today;
+        checkBoxHasExpiration.Checked = false;
+        dateTimePickerExpiration.Value = DateTime.Today;
+        textBoxFilePath.Clear();
+        textBoxComment.Clear();
+        checkBoxImportant.Checked = false;
+
+        labelInfo.Text = "Все документы удалены.";
     }
 }
