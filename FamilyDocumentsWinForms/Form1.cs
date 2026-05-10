@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Forms;
 using MyLibrary;
 using FamilyDocumentsWinForms.Services;
+using Microsoft.VisualBasic;
 
 namespace FamilyDocumentsWinForms;
 
@@ -13,7 +14,10 @@ public partial class Form1 : Form
 {
     private List<FamilyDocument> documents = new List<FamilyDocument>();
     private List<FamilyDocument> filteredDocuments = new List<FamilyDocument>();
+    private List<string> owners = new List<string>();
+
     private DocumentStorageService storageService = new DocumentStorageService();
+    private OwnerStorageService ownerStorageService = new OwnerStorageService();
 
     private Label labelHeader = null!;
     private Label labelId = null!;
@@ -28,10 +32,12 @@ public partial class Form1 : Form
     private TextBox labelInfo = null!;
     private Label labelSearch = null!;
     private Label labelFilter = null!;
+    private Label labelOwnerFilter = null!;
     private NumericUpDown numericId = null!;
     private TextBox textBoxTitle = null!;
     private ComboBox comboBoxType = null!;
-    private TextBox textBoxOwner = null!;
+    private ComboBox comboBoxOwner = null!;
+    private ContextMenuStrip ownerContextMenu = null!;
     private TextBox textBoxDocumentNumber = null!;
     private DateTimePicker dateTimePickerDocument = null!;
     private DateTimePicker dateTimePickerExpiration = null!;
@@ -40,6 +46,7 @@ public partial class Form1 : Form
     private TextBox textBoxFilePath = null!;
     private TextBox textBoxSearch = null!;
     private ComboBox comboBoxFilter = null!;
+    private ComboBox comboBoxOwnerFilter = null!;
     private CheckBox checkBoxImportant = null!;
     private Button buttonAdd = null!;
     private Button buttonClear = null!;
@@ -49,6 +56,7 @@ public partial class Form1 : Form
     private Button buttonOpenFile = null!;
     private Button buttonResetSearch = null!;
     private Button buttonDeleteAll = null!;
+    private Button buttonAddOwner = null!;
     private DataGridView dataGridViewDocuments = null!;
 
     public Form1()
@@ -57,6 +65,10 @@ public partial class Form1 : Form
         CreateFormElements();
 
         documents = storageService.LoadDocuments();
+        owners = ownerStorageService.LoadOwners();
+
+        RefreshOwnersList();
+
         filteredDocuments = new List<FamilyDocument>(documents);
         RefreshDocumentsList();
     }
@@ -64,7 +76,7 @@ public partial class Form1 : Form
     private void CreateFormElements()
     {
         this.Text = "Семейная документация";
-        this.Size = new Size(1100, 960);
+        this.Size = new Size(1250, 960);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
         this.Font = new Font("Segoe UI", 9);
@@ -130,10 +142,30 @@ public partial class Form1 : Form
         labelOwner.AutoSize = true;
         this.Controls.Add(labelOwner);
 
-        textBoxOwner = new TextBox();
-        textBoxOwner.Location = new Point(230, 180);
-        textBoxOwner.Size = new Size(200, 25);
-        this.Controls.Add(textBoxOwner);
+        comboBoxOwner = new ComboBox();
+        comboBoxOwner.Location = new Point(230, 180);
+        comboBoxOwner.Size = new Size(130, 25);
+        comboBoxOwner.DropDownStyle = ComboBoxStyle.DropDownList;
+        this.Controls.Add(comboBoxOwner);
+
+        ownerContextMenu = new ContextMenuStrip();
+        ToolStripMenuItem deleteOwnerMenuItem = new ToolStripMenuItem("Удалить владельца");
+        deleteOwnerMenuItem.Click += DeleteOwnerMenuItem_Click;
+        ownerContextMenu.Items.Add(deleteOwnerMenuItem);
+        comboBoxOwner.ContextMenuStrip = ownerContextMenu;
+
+        buttonAddOwner = new Button();
+        buttonAddOwner.Text = "+";
+        buttonAddOwner.Location = new Point(370, 180);
+        buttonAddOwner.Size = new Size(60, 32);
+        buttonAddOwner.BackColor = Color.FromArgb(52, 152, 219);
+        buttonAddOwner.ForeColor = Color.White;
+        buttonAddOwner.FlatStyle = FlatStyle.Flat;
+        buttonAddOwner.FlatAppearance.BorderSize = 0;
+        buttonAddOwner.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+        buttonAddOwner.Cursor = Cursors.Hand;
+        buttonAddOwner.Click += ButtonAddOwner_Click;
+        this.Controls.Add(buttonAddOwner);
 
         labelDocumentNumber = new Label();
         labelDocumentNumber.Text = "Номер документа:";
@@ -310,19 +342,19 @@ public partial class Form1 : Form
 
         textBoxSearch = new TextBox();
         textBoxSearch.Location = new Point(530, 52);
-        textBoxSearch.Size = new Size(180, 25);
+        textBoxSearch.Size = new Size(190, 25);
         textBoxSearch.TextChanged += SearchControls_Changed;
         this.Controls.Add(textBoxSearch);
 
         labelFilter = new Label();
         labelFilter.Text = "Тип:";
-        labelFilter.Location = new Point(740, 55);
+        labelFilter.Location = new Point(730, 55);
         labelFilter.AutoSize = true;
         this.Controls.Add(labelFilter);
 
         comboBoxFilter = new ComboBox();
-        comboBoxFilter.Location = new Point(790, 52);
-        comboBoxFilter.Size = new Size(260, 25);
+        comboBoxFilter.Location = new Point(780, 52);
+        comboBoxFilter.Size = new Size(160, 25);
         comboBoxFilter.DropDownStyle = ComboBoxStyle.DropDownList;
         comboBoxFilter.Items.Add("Все");
         comboBoxFilter.Items.Add("Паспорт");
@@ -334,9 +366,22 @@ public partial class Form1 : Form
         comboBoxFilter.SelectedIndexChanged += SearchControls_Changed;
         this.Controls.Add(comboBoxFilter);
 
+        labelOwnerFilter = new Label();
+        labelOwnerFilter.Text = "Владелец:";
+        labelOwnerFilter.Location = new Point(945, 55);
+        labelOwnerFilter.AutoSize = true;
+        this.Controls.Add(labelOwnerFilter);
+
+        comboBoxOwnerFilter = new ComboBox();
+        comboBoxOwnerFilter.Location = new Point(1040, 52);
+        comboBoxOwnerFilter.Size = new Size(170, 25);
+        comboBoxOwnerFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+        comboBoxOwnerFilter.SelectedIndexChanged += SearchControls_Changed;
+        this.Controls.Add(comboBoxOwnerFilter);
+
         dataGridViewDocuments = new DataGridView();
         dataGridViewDocuments.Location = new Point(460, 100);
-        dataGridViewDocuments.Size = new Size(590, 270);
+        dataGridViewDocuments.Size = new Size(750, 270);
         dataGridViewDocuments.ReadOnly = true;
         dataGridViewDocuments.AllowUserToAddRows = false;
         dataGridViewDocuments.AllowUserToDeleteRows = false;
@@ -353,15 +398,15 @@ public partial class Form1 : Form
         dataGridViewDocuments.Columns.Add("Status", "Статус");
 
         dataGridViewDocuments.Columns["Id"].Width = 50;
-        dataGridViewDocuments.Columns["Title"].Width = 190;
-        dataGridViewDocuments.Columns["Category"].Width = 160;
-        dataGridViewDocuments.Columns["Date"].Width = 100;
-        dataGridViewDocuments.Columns["Status"].Width = 90;
+        dataGridViewDocuments.Columns["Title"].Width = 260;
+        dataGridViewDocuments.Columns["Category"].Width = 180;
+        dataGridViewDocuments.Columns["Date"].Width = 130;
+        dataGridViewDocuments.Columns["Status"].Width = 130;
         this.Controls.Add(dataGridViewDocuments);
 
         buttonResetSearch = new Button();
         buttonResetSearch.Text = "Сбросить";
-        buttonResetSearch.Location = new Point(880, 390);
+        buttonResetSearch.Location = new Point(1040, 430);
         buttonResetSearch.Size = new Size(170, 40);
         buttonResetSearch.BackColor = Color.FromArgb(149, 165, 166);
         buttonResetSearch.ForeColor = Color.White;
@@ -375,7 +420,7 @@ public partial class Form1 : Form
         labelInfo = new TextBox();
         labelInfo.Text = "Информация о документе появится здесь.";
         labelInfo.Location = new Point(30, 705);
-        labelInfo.Size = new Size(1020, 170);
+        labelInfo.Size = new Size(1180, 170);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
         labelInfo.BorderStyle = BorderStyle.FixedSingle;
@@ -406,15 +451,38 @@ public partial class Form1 : Form
         }
     }
 
+    private void RefreshOwnersList()
+    {
+        comboBoxOwner.Items.Clear();
+        comboBoxOwnerFilter.Items.Clear();
+
+        comboBoxOwnerFilter.Items.Add("Все");
+
+        foreach (string owner in owners)
+        {
+            comboBoxOwner.Items.Add(owner);
+            comboBoxOwnerFilter.Items.Add(owner);
+        }
+
+        if (comboBoxOwner.Items.Count > 0)
+        {
+            comboBoxOwner.SelectedIndex = 0;
+        }
+
+        comboBoxOwnerFilter.SelectedIndex = 0;
+    }
+
     private void ApplyFilters()
     {
         string searchText = textBoxSearch.Text.Trim().ToLower();
         string selectedCategory = comboBoxFilter.SelectedItem?.ToString() ?? "Все";
+        string selectedOwner = comboBoxOwnerFilter.SelectedItem?.ToString() ?? "Все";
 
         filteredDocuments = documents
             .Where(document =>
                 document.Title.ToLower().Contains(searchText) &&
-                (selectedCategory == "Все" || document.Category == selectedCategory)
+                (selectedCategory == "Все" || document.Category == selectedCategory) &&
+                (selectedOwner == "Все" || document.Owner == selectedOwner)
             )
             .ToList();
 
@@ -505,7 +573,7 @@ public partial class Form1 : Form
         FamilyDocument document = new FamilyDocument(id, title)
         {
             Category = type,
-            Owner = textBoxOwner.Text.Trim(),
+            Owner = comboBoxOwner.SelectedItem?.ToString() ?? "",
             DocumentNumber = textBoxDocumentNumber.Text.Trim(),
             DocumentDate = dateTimePickerDocument.Value,
             ExpirationDate = checkBoxHasExpiration.Checked
@@ -528,7 +596,10 @@ public partial class Form1 : Form
         numericId.Value = 1;
         textBoxTitle.Clear();
         comboBoxType.SelectedIndex = 0;
-        textBoxOwner.Clear();
+        if (comboBoxOwner.Items.Count > 0)
+        {
+            comboBoxOwner.SelectedIndex = 0;
+        }
         textBoxDocumentNumber.Clear();
         dateTimePickerDocument.Value = DateTime.Today;
         checkBoxHasExpiration.Checked = false;
@@ -563,7 +634,7 @@ public partial class Form1 : Form
         selectedDocument.Id = (int)numericId.Value;
         selectedDocument.Title = textBoxTitle.Text.Trim();
         selectedDocument.Category = comboBoxType.SelectedItem?.ToString() ?? "Не указано";
-        selectedDocument.Owner = textBoxOwner.Text.Trim();
+        selectedDocument.Owner = comboBoxOwner.SelectedItem?.ToString() ?? "";
         selectedDocument.DocumentNumber = textBoxDocumentNumber.Text.Trim();
         selectedDocument.DocumentDate = dateTimePickerDocument.Value;
         selectedDocument.ExpirationDate = checkBoxHasExpiration.Checked
@@ -656,7 +727,11 @@ public partial class Form1 : Form
             comboBoxType.SelectedIndex = categoryIndex;
         }
 
-        textBoxOwner.Text = selectedDocument.Owner;
+        int ownerIndex = comboBoxOwner.Items.IndexOf(selectedDocument.Owner);
+        if (ownerIndex >= 0)
+        {
+            comboBoxOwner.SelectedIndex = ownerIndex;
+        }
         textBoxDocumentNumber.Text = selectedDocument.DocumentNumber;
         dateTimePickerDocument.Value = selectedDocument.DocumentDate;
 
@@ -687,6 +762,7 @@ public partial class Form1 : Form
     {
         textBoxSearch.Clear();
         comboBoxFilter.SelectedIndex = 0;
+        comboBoxOwnerFilter.SelectedIndex = 0;
         ApplyFilters();
     }
      private void ButtonSelectFile_Click(object? sender, EventArgs e)
@@ -755,7 +831,12 @@ public partial class Form1 : Form
         numericId.Value = 1;
         textBoxTitle.Clear();
         comboBoxType.SelectedIndex = 0;
-        textBoxOwner.Clear();
+
+        if (comboBoxOwner.Items.Count > 0)
+        {
+            comboBoxOwner.SelectedIndex = 0;
+        }
+
         textBoxDocumentNumber.Clear();
         dateTimePickerDocument.Value = DateTime.Today;
         checkBoxHasExpiration.Checked = false;
@@ -765,5 +846,61 @@ public partial class Form1 : Form
         checkBoxImportant.Checked = false;
 
         labelInfo.Text = "Все документы удалены.";
+    }
+    private void ButtonAddOwner_Click(object? sender, EventArgs e)
+    {
+        string ownerName = Microsoft.VisualBasic.Interaction.InputBox(
+            "Введите имя владельца:",
+            "Добавление владельца",
+            ""
+        ).Trim();
+
+        if (string.IsNullOrWhiteSpace(ownerName))
+        {
+            labelInfo.Text = "Имя владельца не введено.";
+            return;
+        }
+
+        if (owners.Contains(ownerName))
+        {
+            labelInfo.Text = "Такой владелец уже есть в списке.";
+            return;
+        }
+
+        owners.Add(ownerName);
+        ownerStorageService.SaveOwners(owners);
+        RefreshOwnersList();
+
+        comboBoxOwner.SelectedItem = ownerName;
+        labelInfo.Text = "Владелец добавлен: " + ownerName;
+    }
+    private void DeleteOwnerMenuItem_Click(object? sender, EventArgs e)
+    {
+        string ownerName = comboBoxOwner.SelectedItem?.ToString() ?? "";
+
+        if (string.IsNullOrWhiteSpace(ownerName))
+        {
+            labelInfo.Text = "Выберите владельца для удаления.";
+            return;
+        }
+
+        DialogResult result = MessageBox.Show(
+            "Вы действительно хотите удалить владельца из списка?\n\n" + ownerName,
+            "Подтверждение удаления владельца",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (result != DialogResult.Yes)
+        {
+            return;
+        }
+
+        owners.Remove(ownerName);
+        ownerStorageService.SaveOwners(owners);
+        RefreshOwnersList();
+        ApplyFilters();
+
+        labelInfo.Text = "Владелец удален из списка: " + ownerName;
     }
 }
