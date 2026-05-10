@@ -57,6 +57,7 @@ public partial class Form1 : Form
     private Button buttonResetSearch = null!;
     private Button buttonDeleteAll = null!;
     private Button buttonAddOwner = null!;
+    private Button buttonStatistics = null!;
     private DataGridView dataGridViewDocuments = null!;
     private ContextMenuStrip documentContextMenu = null!;
 
@@ -310,6 +311,19 @@ public partial class Form1 : Form
         buttonDeleteAll.Click += ButtonDeleteAll_Click;
         this.Controls.Add(buttonDeleteAll);
 
+        buttonStatistics = new Button();
+        buttonStatistics.Text = "Статистика";
+        buttonStatistics.Location = new Point(850, 430);
+        buttonStatistics.Size = new Size(170, 40);
+        buttonStatistics.BackColor = Color.FromArgb(41, 128, 185);
+        buttonStatistics.ForeColor = Color.White;
+        buttonStatistics.FlatStyle = FlatStyle.Flat;
+        buttonStatistics.FlatAppearance.BorderSize = 0;
+        buttonStatistics.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+        buttonStatistics.Cursor = Cursors.Hand;
+        buttonStatistics.Click += ButtonStatistics_Click;
+        this.Controls.Add(buttonStatistics);
+
         buttonEdit = new Button();
         buttonEdit.Text = "Изменить";
         buttonEdit.Location = new Point(230, 605);
@@ -435,7 +449,7 @@ public partial class Form1 : Form
 
         labelInfo = new TextBox();
         labelInfo.Text = "Информация о документе появится здесь.";
-        labelInfo.Location = new Point(30, 705);
+        labelInfo.Location = new Point(30, 690);
         labelInfo.Size = new Size(1180, 170);
         labelInfo.BackColor = Color.White;
         labelInfo.ForeColor = Color.FromArgb(44, 62, 80);
@@ -1066,5 +1080,23 @@ public partial class Form1 : Form
         ApplyFilters();
 
         labelInfo.Text = "Прикрепленный файл убран у документа:" + Environment.NewLine + selectedDocument.Title;
+    }
+
+    private void ButtonStatistics_Click(object? sender, EventArgs e)
+    {
+        int totalDocuments = documents.Count;
+        int importantDocuments = documents.Count(document => document.IsImportant);
+        int documentsWithExpiration = documents.Count(document => document.ExpirationDate.HasValue);
+        int expiredDocuments = documents.Count(document => GetExpirationStatus(document) == "Истек");
+        int expiringSoonDocuments = documents.Count(document => GetExpirationStatus(document) == "Скоро истекает");
+
+        labelInfo.Text =
+            "Статистика документов:" + Environment.NewLine +
+            Environment.NewLine +
+            "Всего документов: " + totalDocuments + Environment.NewLine +
+            "Важных документов: " + importantDocuments + Environment.NewLine +
+            "Документов со сроком действия: " + documentsWithExpiration + Environment.NewLine +
+            "Документов с истекшим сроком: " + expiredDocuments + Environment.NewLine +
+            "Документов, срок которых скоро истекает: " + expiringSoonDocuments;
     }
 }
