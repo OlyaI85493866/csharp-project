@@ -162,18 +162,21 @@ public partial class Form1 : Form
         labelExpirationDate.Text = "Срок действия:";
         labelExpirationDate.Location = new Point(30, 300);
         labelExpirationDate.AutoSize = true;
+        labelExpirationDate.Visible = false;
         this.Controls.Add(labelExpirationDate);
 
         dateTimePickerExpiration = new DateTimePicker();
         dateTimePickerExpiration.Location = new Point(230, 300);
         dateTimePickerExpiration.Size = new Size(200, 25);
         dateTimePickerExpiration.Format = DateTimePickerFormat.Short;
+        dateTimePickerExpiration.Visible = false;
         this.Controls.Add(dateTimePickerExpiration);
 
         checkBoxHasExpiration = new CheckBox();
         checkBoxHasExpiration.Text = "Есть срок действия";
         checkBoxHasExpiration.Location = new Point(230, 330);
         checkBoxHasExpiration.AutoSize = true;
+        checkBoxHasExpiration.CheckedChanged += CheckBoxHasExpiration_CheckedChanged;
         this.Controls.Add(checkBoxHasExpiration);
 
         labelComment = new Label();
@@ -340,7 +343,6 @@ public partial class Form1 : Form
         dataGridViewDocuments.Columns["Category"].Width = 160;
         dataGridViewDocuments.Columns["Date"].Width = 100;
         dataGridViewDocuments.Columns["Status"].Width = 90;
-
         this.Controls.Add(dataGridViewDocuments);
 
         buttonResetSearch = new Button();
@@ -454,6 +456,23 @@ public partial class Form1 : Form
         else
         {
             labelInfo.Text = "Документ не отмечен как важный.";
+        }
+    }
+
+    private void CheckBoxHasExpiration_CheckedChanged(object? sender, EventArgs e)
+    {
+        bool hasExpiration = checkBoxHasExpiration.Checked;
+
+        labelExpirationDate.Visible = hasExpiration;
+        dateTimePickerExpiration.Visible = hasExpiration;
+
+        if (hasExpiration)
+        {
+            labelInfo.Text = "Для документа указан срок действия.";
+        }
+        else
+        {
+            labelInfo.Text = "Срок действия для документа не указан.";
         }
     }
 
